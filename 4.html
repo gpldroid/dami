@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV Pro - المشغل الذكي</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
+    <style>
+        :root {
+            --primary: #ff6b35;
+            --secondary: #00b894;
+            --dark: #0d1117;
+            --darker: #0a0e14;
+            --card: #161b22;
+            --accent: #58a6ff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--dark);
+            color: #e6edf3;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .app-container { display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* Header */
+        .header {
+            background: var(--darker);
+            padding: 15px 20px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            sticky: top;
+            z-index: 100;
+        }
+
+        .logo { font-size: 24px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+
+        .quick-connect { display: flex; gap: 10px; flex: 1; max-width: 700px; }
+        .input-group { flex: 1; position: relative; }
+        .input-group i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #8b949e; }
+        input {
+            width: 100%;
+            padding: 10px 35px 10px 10px;
+            background: var(--card);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: white;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+
+        /* Player Section */
+        .player-section { background: #000; position: relative; width: 100%; }
+        #video { width: 100%; height: 60vh; max-height: 500px; background: #000; }
+        
+        .player-info {
+            position: absolute; bottom: 10px; right: 10px;
+            background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 4px;
+        }
+
+        /* Main Content */
+        .main-content { display: flex; flex: 1; height: calc(100vh - 60vh - 80px); }
+        
+        .sidebar { width: 250px; background: var(--darker); border-left: 1px solid #30363d; padding: 15px; overflow-y: auto; }
+        .channels-container { flex: 1; padding: 20px; overflow-y: auto; background: var(--dark); }
+
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .channel-card {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            border: 1px solid transparent;
+            transition: 0.3s;
+        }
+        .channel-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .channel-card img { width: 100%; height: 80px; object-fit: contain; margin-bottom: 8px; }
+        .channel-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .loading-overlay { display: none; text-align: center; padding: 50px; width: 100%; }
+        
+        @media (max-width: 768px) {
+            .main-content { flex-direction: column; }
+            .sidebar { width: 100%; order: 2; }
+            #video { height: 35vh; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header class="header">
+        <div class="logo"><i class="fas fa-tv"></i> IPTV PRO</div>
+        <div class="quick-connect">
+            <div class="input-group">
+                <i class="fas fa-server"></i>
+                <input type="text" id="host" placeholder="السيرفر (http://host:port/c)" value="http://smart.dukoow.net:80/c">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-id-card"></i>
+                <input type="text" id="mac" placeholder="MAC Address" value="00:1A:79:22:A3:D1">
+            </div>
+            <button class="btn btn-primary" onclick="connectIPTV()">اتصال</button>
+        </div>
+    </header>
+
+    <div class="player-section">
+        <video id="video" controls autoplay></video>
+        <div class="player-info" id="playerInfo" style="display:none">
+            <span id="currentChannel">جاري التشغيل...</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <aside class="sidebar">
+            <div id="stats" style="margin-bottom: 20px; font-size: 14px;">
+                <div style="color: var(--primary)">القنوات: <span id="count">0</span></div>
+            </div>
+            <button class="btn" style="width:100%; background:#30363d; color:white" onclick="location.reload()">تحديث الصفحة</button>
+        </aside>
+
+        <main class="channels-container">
+            <div id="loading" class="loading-overlay">
+                <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--primary)"></i>
+                <p>جاري جلب القنوات...</p>
+            </div>
+            <div id="channelsView" class="channels-grid"></div>
+        </main>
+    </div>
+</div>
+
+<script>
+    // استخدام Proxy لتجاوز CORS
+    const PROXY = "https://corsproxy.io/?";
+    let hls = null;
+    let allChannels = [];
+    const video = document.getElementById('video');
+
+    // دالة الاتصال الرئيسية
+    async function connectIPTV() {
+        const host = document.getElementById('host').value.trim();
+        const mac = document.getElementById('mac').value.trim();
+        
+        if (!host || !mac) return alert("يرجى إدخال البيانات");
+
+        toggleLoading(true);
+        
+        try {
+            // بناء رابط جلب القنوات الخاص بسيرفرات Stalker/MAG
+            const targetUrl = `${host}/portal.php?type=itv&action=get_all_channels`;
+            const finalUrl = `${PROXY}${encodeURIComponent(targetUrl)}&mac=${encodeURIComponent(mac)}`;
+
+            const response = await fetch(finalUrl);
+            if (!response.ok) throw new Error("فشل في الوصول للسيرفر");
+            
+            const result = await response.json();
+            allChannels = result.js?.data || [];
+            
+            renderChannels(allChannels);
+            document.getElementById('count').textContent = allChannels.length;
+            
+        } catch (err) {
+            console.error(err);
+            alert("خطأ في الاتصال: " + err.message);
+        } finally {
+            toggleLoading(false);
+        }
+    }
+
+    // عرض القنوات في الشبكة
+    function renderChannels(channels) {
+        const container = document.getElementById('channelsView');
+        container.innerHTML = channels.map((ch, idx) => `
+            <div class="channel-card" onclick="playChannel('${ch.cmd}', ${idx})">
+                <img src="${ch.tv_logo || 'https://via.placeholder.com/150x80/161b22/ff6b35?text=IPTV'}" 
+                     onerror="this.src='https://via.placeholder.com/150x80/161b22/ff6b35?text=TV'">
+                <div class="channel-name">${ch.name}</div>
+            </div>
+        `).join('');
+    }
+
+    // تشغيل القناة مع معالجة الروابط والـ CORS
+    function playChannel(cmd, index) {
+        // 1. تنظيف الرابط من أوامر السيرفر
+        let streamUrl = cmd.replace(/ffmpeg|ffrt|http:\/\/localhost[:0-9]*\//g, "").trim();
+        
+        // 2. تحديث الواجهة
+        const channel = allChannels[index];
+        document.getElementById('playerInfo').style.display = 'block';
+        document.getElementById('currentChannel').textContent = channel.name;
+
+        // 3. إدارة مشغل HLS
+        if (hls) {
+            hls.destroy(); // تدمير المشغل القديم لتوفير الذاكرة
+        }
+
+        // 4. التشغيل مع استخدام البروكسي لتجاوز CORS في الـ Segments
+        const proxiedStream = `${PROXY}${encodeURIComponent(streamUrl)}`;
+
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                xhrSetup: function(xhr, url) {
+                    // إذا كان الرابط لا يحتوي على البروكسي بالفعل، أضفه (للملفات الفرعية .ts)
+                    if (!url.includes('corsproxy.io')) {
+                        // ملاحظة: hls.js سيتولى معظم الروابط النسبية تلقائياً
+                    }
+                }
+            });
+            
+            hls.loadSource(proxiedStream);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    console.warn("خطأ في التشغيل، محاولة إعادة التحميل...");
+                    hls.recoverMediaError();
+                }
+            });
+        } 
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // لدعم متصفح Safari
+            video.src = proxiedStream;
+        }
+    }
+
+    function toggleLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+        document.getElementById('channelsView').style.display = show ? 'none' : 'grid';
+    }
+
+    function showNotification(msg) {
+        alert(msg);
+    }
+</script>
+
+</body>
+</html>
