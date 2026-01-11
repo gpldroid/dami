@@ -1,0 +1,14 @@
+# ملفات النظام
+.DS_Store
+Thumbs.db
+
+# ملفات المحرر
+.vscode/
+.idea/
+
+# ملفات الـ Logs
+*.log
+
+# في حال قمت مستقبلاً بإضافة مكتبات عبر npm
+node_modules/
+dist/
