@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DAMI X-PRO - أفضل منصة لمشاهدة القنوات والأفلام والمسلسلات.">
+    <meta name="author" content="Imad Eddine Lamrani">
+
+    <title>DAMI X-PRO | عماد الدين لمراني</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-body: #050505;
+            --bg-card: #121212;
+            --bg-sidebar: rgba(18, 18, 18, 0.95);
+            --text-main: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-color: #d4af37;
+            --border-color: rgba(212, 175, 55, 0.15);
+            --gradient-accent: linear-gradient(135deg, #d4af37 0%, #bf953f 100%);
+            --radius-card: 16px;
+        }
+
+        .light-mode {
+            --bg-body: #F0F2F5; --bg-card: #FFFFFF; --bg-sidebar: #FFFFFF;
+            --text-main: #050505; --text-secondary: #65676B; --accent-color: #1877F2;
+            --border-color: #dddfe2; --gradient-accent: linear-gradient(135deg, #1877F2 0%, #1877F2 100%);
+        }
+
+        body { background: var(--bg-body); color: var(--text-main); font-family: system-ui, -apple-system, sans-serif; transition: 0.3s; margin: 0; padding-bottom: 60px; }
+        header { background: var(--bg-card); padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        
+        .player-wrapper { background: #000; width: 100%; aspect-ratio: 16/9; max-height: 70vh; }
+        .nav-tabs { display: flex; background: var(--bg-card); margin: 15px auto; max-width: 800px; border-radius: var(--radius-card); padding: 5px; gap: 5px; }
+        .mode-btn { flex: 1; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text-secondary); border-radius: 12px; transition: 0.3s; cursor: pointer; }
+        .mode-btn.active { color: var(--accent-color); background: rgba(212, 175, 55, 0.1); border-bottom: 2px solid var(--accent-color); }
+
+        .cat-scroll-area { display: flex; overflow-x: auto; gap: 8px; padding: 10px 15px; scrollbar-width: none; }
+        .cat-btn { white-space: nowrap; padding: 8px 18px; border-radius: 20px; font-size: 12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; }
+        .cat-btn.active { background: var(--accent-color); color: #000; font-weight: bold; }
+
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; padding: 15px; max-width: 1400px; margin: 0 auto; }
+        .media-card { background: var(--bg-card); border-radius: 12px; padding: 8px; text-align: center; border: 1px solid var(--border-color); transition: 0.2s; cursor: pointer; }
+        .media-card:hover { transform: scale(1.03); border-color: var(--accent-color); }
+        .media-logo { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; margin-bottom: 6px; background: #222; }
+        .media-title { font-size: 11px; line-height: 1.2; height: 2.4em; overflow: hidden; }
+
+        .sidebar { position: fixed; top: 0; right: -280px; width: 260px; height: 100%; background: var(--bg-sidebar); z-index: 2000; transition: 0.4s; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
+        .sidebar.open { right: 0; }
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1999; display: none; }
+        .sidebar-overlay.open { display: block; }
+
+        .floating-btn { position: fixed; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; color: #fff; }
+        #backToTop { bottom: 30px; left: 30px; background: var(--accent-color); display: none; }
+        .whatsapp-btn { bottom: 90px; left: 30px; background: #25D366; font-size: 24px; text-decoration: none; }
+        
+        .info-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; position: relative; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="flex justify-between items-center mb-8">
+            <span class="text-xl font-bold" style="color:var(--accent-color)">DAMI X-PRO</span>
+            <i class="fas fa-times cursor-pointer text-xl" onclick="toggleSidebar()"></i>
+        </div>
+        <nav class="space-y-4">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()"><i class="fas fa-home text-yellow-500"></i> الرئيسية</div>
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showModal('about')"><i class="fas fa-info-circle text-yellow-500"></i> من نحن</div>
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showModal('contact')"><i class="fas fa-envelope text-yellow-500"></i> اتصل بنا</div>
+        </nav>
+    </aside>
+
+    <header>
+        <div class="flex items-center gap-3">
+            <i class="fas fa-bars text-xl cursor-pointer" onclick="toggleSidebar()"></i>
+            <span class="font-black text-lg" style="color:var(--accent-color)">DAMI X-PRO</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="cursor-pointer" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="player-wrapper">
+        <video id="player" playsinline controls crossorigin></video>
+    </div>
+
+    <div class="nav-tabs">
+        <button onclick="switchMode('get_live_streams', 'get_live_categories', this)" class="mode-btn active"><i class="fas fa-tv block"></i> مباشر</button>
+        <button onclick="switchMode('get_vod_streams', 'get_vod_categories', this)" class="mode-btn"><i class="fas fa-film block"></i> أفلام</button>
+        <button onclick="switchMode('get_series', 'get_series_categories', this)" class="mode-btn"><i class="fas fa-layer-group block"></i> مسلسلات</button>
+    </div>
+
+    <div id="catsWrapper" class="cat-scroll-area"></div>
+
+    <div class="px-4 max-w-2xl mx-auto mb-4">
+        <input id="searchBar" type="text" class="w-full bg-[#1a1a1a] border border-gray-800 rounded-full px-6 py-3 text-sm outline-none focus:border-yellow-600" placeholder="ابحث هنا...">
+    </div>
+
+    <main>
+        <div id="contentGrid" class="content-grid"></div>
+        <div id="loadMore" class="text-center py-8 hidden">
+            <button onclick="renderMore()" class="bg-yellow-600 text-black px-10 py-2 rounded-full font-bold">عرض المزيد</button>
+        </div>
+    </main>
+
+    <a href="https://wa.me/212640059730" target="_blank" class="floating-btn whatsapp-btn"><i class="fab fa-whatsapp"></i></a>
+    <button id="backToTop" class="floating-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
+
+    <div id="infoModal" class="info-modal" onclick="if(event.target===this) this.style.display='none'">
+        <div class="modal-content">
+            <h3 id="modalTitle" class="text-xl font-bold mb-4 text-yellow-500"></h3>
+            <div id="modalBody" class="text-gray-300"></div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            base: "http://ottpro.iptvpro2.com:8789",
+            user: "Oujakr12",
+            pass: "87593226",
+            proxy: "https://api.allorigins.win/get?url="
+        };
+
+        let currentMode = 'get_live_streams';
+        let fullData = [];
+        let displayedCount = 42;
+        
+        // إعداد المشغل
+        const video = document.getElementById('player');
+        const player = new Plyr(video, { captions: { active: true, update: true } });
+        const hls = new Hls();
+
+        // دالة جلب البيانات الآمنة (CORS Bypass)
+        async function apiFetch(action, params = "") {
+            const targetUrl = `${CONFIG.base}/player_api.php?username=${CONFIG.user}&password=${CONFIG.pass}&action=${action}${params}`;
+            try {
+                const response = await fetch(CONFIG.proxy + encodeURIComponent(targetUrl));
+                const data = await response.json();
+                return JSON.parse(data.contents);
+            } catch (e) {
+                console.error("Fetch Error:", e);
+                return [];
+            }
+        }
+
+        async function switchMode(action, catAction, btn) {
+            currentMode = action;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const cats = await apiFetch(catAction);
+            renderCategories(cats, action);
+        }
+
+        function renderCategories(cats, action) {
+            const container = document.getElementById('catsWrapper');
+            container.innerHTML = `<button onclick="loadCategory('all')" class="cat-btn active">الكل</button>`;
+            
+            cats.forEach(cat => {
+                const b = document.createElement('button');
+                b.className = "cat-btn";
+                b.innerText = cat.category_name;
+                b.onclick = () => {
+                    document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    loadCategory(cat.category_id);
+                };
+                container.appendChild(b);
+            });
+            loadCategory('all');
+        }
+
+        async function loadCategory(catId) {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = '<div class="col-span-full text-center py-10">جاري التحميل...</div>';
+            
+            const params = catId === 'all' ? "" : `&category_id=${catId}`;
+            fullData = await apiFetch(currentMode, params);
+            displayedCount = 42;
+            renderItems();
+        }
+
+        function renderItems(data = null) {
+            const items = data || fullData.slice(0, displayedCount);
+            const grid = document.getElementById('contentGrid');
+            
+            grid.innerHTML = items.map(item => `
+                <div onclick="playMedia('${item.stream_id || item.series_id || item.vod_id}', '${item.container_extension || 'm3u8'}')" class="media-card">
+                    <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo" loading="lazy" onerror="this.src='https://via.placeholder.com/150'">
+                    <p class="media-title">${item.name}</p>
+                </div>
+            `).join('');
+            
+            document.getElementById('loadMore').style.display = (fullData.length > displayedCount && !data) ? 'block' : 'none';
+        }
+
+        function renderMore() {
+            displayedCount += 42;
+            renderItems();
+        }
+
+        function playMedia(id, ext) {
+            let type = "live";
+            if(currentMode === 'get_vod_streams') type = "movie";
+            if(currentMode === 'get_series') type = "series";
+            
+            const format = (currentMode === 'get_live_streams') ? "m3u8" : (ext || "mp4");
+            const streamUrl = `${CONFIG.base}/${type}/${CONFIG.user}/${CONFIG.pass}/${id}.${format}`;
+
+            if (format === 'm3u8') {
+                if (Hls.isSupported()) {
+                    hls.loadSource(streamUrl);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    // دعم متصفح Safari
+                    video.src = streamUrl;
+                    video.play();
+                }
+            } else {
+                video.src = streamUrl;
+                video.play().catch(() => alert("هذا التنسيق غير مدعوم في متصفحك"));
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // البحث
+        document.getElementById('searchBar').oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = fullData.filter(i => i.name.toLowerCase().includes(term));
+            renderItems(filtered.slice(0, 50));
+        };
+
+        // واجهة المستخدم
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.sidebar-overlay').classList.toggle('open');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const icon = document.getElementById('themeIcon');
+            icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun text-yellow-500' : 'fas fa-moon';
+        }
+
+        function showModal(type) {
+            const modal = document.getElementById('infoModal');
+            document.getElementById('modalTitle').innerText = type === 'about' ? 'من نحن' : 'اتصل بنا';
+            document.getElementById('modalBody').innerText = type === 'about' ? 'منصة DAMI X-PRO هي الأقوى لمتابعة المحتوى العربي والعالمي بجودات متعددة.' : 'للاشتراك أو الدعم الفني تواصل معنا عبر واتساب: 212640059730+';
+            modal.style.display = 'flex';
+            toggleSidebar();
+        }
+
+        window.onscroll = () => {
+            document.getElementById("backToTop").style.display = window.scrollY > 400 ? "flex" : "none";
+        };
+
+        window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
+    </script>
+</body>
+</html>
