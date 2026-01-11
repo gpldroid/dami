@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    
+    <title>DAMI X-PRO | Web Player</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-body: #0a0a0a;
+            --bg-card: #161616;
+            --accent: #d4af37;
+            --text: #ffffff;
+        }
+        body { background: var(--bg-body); color: var(--text); font-family: sans-serif; }
+        .player-container { width: 100%; background: #000; aspect-ratio: 16/9; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; padding: 20px; }
+        .card { background: var(--bg-card); border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; border: 1px solid #222; }
+        .card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .card img { width: 100%; border-radius: 5px; margin-bottom: 8px; aspect-ratio: 1/1; object-fit: contain; background: #000; }
+        .card p { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tabs { display: flex; justify-content: center; gap: 10px; padding: 20px; background: var(--bg-card); }
+        .tab-btn { padding: 10px 20px; border-radius: 5px; background: #222; cursor: pointer; }
+        .tab-btn.active { background: var(--accent); color: #000; font-weight: bold; }
+        .cat-bar { display: flex; overflow-x: auto; gap: 10px; padding: 10px 20px; white-space: nowrap; scrollbar-width: none; }
+        .cat-item { padding: 5px 15px; background: #1a1a1a; border-radius: 20px; cursor: pointer; font-size: 13px; border: 1px solid #333; }
+        .cat-item.active { border-color: var(--accent); color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <header class="p-4 border-b border-gray-800 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-yellow-500">DAMI X-PRO</h1>
+        <div id="status" class="text-xs text-gray-500">متصل</div>
+    </header>
+
+    <div class="player-container">
+        <video id="video" controls crossorigin playsinline></video>
+    </div>
+
+    <div class="tabs">
+        <div onclick="changeType('get_live_streams', this)" class="tab-btn active">مباشر</div>
+        <div onclick="changeType('get_vod_streams', this)" class="tab-btn">أفلام</div>
+        <div onclick="changeType('get_series', this)" class="tab-btn">مسلسلات</div>
+    </div>
+
+    <div id="categoryList" class="cat-bar"></div>
+
+    <div class="p-4">
+        <input type="text" id="search" placeholder="ابحث عن اسم القناة..." class="w-full p-3 rounded bg-zinc-900 border border-zinc-800 outline-none focus:border-yellow-500">
+    </div>
+
+    <div id="content" class="grid-container"></div>
+
+    <script>
+        const API = {
+            host: "http://ottpro.iptvpro2.com:8789",
+            user: "Oujakr12",
+            pass: "87593226",
+            // استخدام بروكسي بديل أكثر استقراراً لـ Chrome
+            proxy: "https://worker-proxy.cors-anywhere.workers.dev/?url=" 
+        };
+
+        let currentType = 'get_live_streams';
+        let allData = [];
+        const video = document.getElementById('video');
+        const hls = new Hls();
+        const player = new Plyr(video);
+
+        // دالة جلب البيانات مع معالجة أخطاء Chrome CORS
+        async function fetchData(action, extra = "") {
+            const url = `${API.host}/player_api.php?username=${API.user}&password=${API.pass}&action=${action}${extra}`;
+            try {
+                // نحاول الجلب المباشر أولاً، إذا فشل نستخدم البروكسي
+                let response;
+                try {
+                    response = await fetch(url);
+                } catch(e) {
+                    response = await fetch(API.proxy + encodeURIComponent(url));
+                }
+                return await response.json();
+            } catch (err) {
+                console.error("خطأ في جلب البيانات:", err);
+                return [];
+            }
+        }
+
+        async function changeType(type, btn) {
+            currentType = type;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            let catAction = 'get_live_categories';
+            if(type === 'get_vod_streams') catAction = 'get_vod_categories';
+            if(type === 'get_series') catAction = 'get_series_categories';
+
+            const cats = await fetchData(catAction);
+            renderCategories(cats);
+            loadContent();
+        }
+
+        function renderCategories(cats) {
+            const container = document.getElementById('categoryList');
+            container.innerHTML = `<div class="cat-item active" onclick="loadContent('all')">الكل</div>`;
+            cats.forEach(c => {
+                container.innerHTML += `<div class="cat-item" onclick="loadContent('${c.category_id}', this)">${c.category_name}</div>`;
+            });
+        }
+
+        async function loadContent(catId = 'all', el = null) {
+            if(el) {
+                document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+                el.classList.add('active');
+            }
+            const extra = catId === 'all' ? "" : `&category_id=${catId}`;
+            allData = await fetchData(currentType, extra);
+            renderCards(allData.slice(0, 60));
+        }
+
+        function renderCards(data) {
+            const container = document.getElementById('content');
+            container.innerHTML = data.map(item => `
+                <div class="card" onclick="play('${item.stream_id || item.series_id || item.vod_id}', '${item.container_extension || 'm3u8'}')">
+                    <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" onerror="this.src='https://via.placeholder.com/150'">
+                    <p>${item.name}</p>
+                </div>
+            `).join('');
+        }
+
+        function play(id, ext) {
+            let path = 'live';
+            if(currentType === 'get_vod_streams') path = 'movie';
+            if(currentType === 'get_series') path = 'series';
+
+            // كروم يحتاج أحياناً لتحويل الرابط ليكون متوافقاً
+            const streamUrl = `${API.host}/${path}/${API.user}/${API.pass}/${id}.${currentType === 'get_live_streams' ? 'm3u8' : (ext || 'mp4')}`;
+
+            if (Hls.isSupported() && streamUrl.includes('m3u8')) {
+                hls.loadSource(streamUrl);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else {
+                video.src = streamUrl;
+                video.play().catch(e => {
+                    alert("نصيحة: إذا لم يشتغل الفيديو، قم بالسماح بـ 'Insecure content' في إعدادات الموقع بمتصفح كروم.");
+                });
+            }
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // بحث
+        document.getElementById('search').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allData.filter(i => i.name.toLowerCase().includes(val));
+            renderCards(filtered.slice(0, 60));
+        };
+
+        // التشغيل عند الفتح
+        window.onload = () => {
+            changeType('get_live_streams', document.querySelector('.tab-btn'));
+        };
+    </script>
+</body>
+</html>
