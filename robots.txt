@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# تحديد رابط خريطة الموقع
+Sitemap: https://gpldroid.github.io/dami/sitemap.xml
