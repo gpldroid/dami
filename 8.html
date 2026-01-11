@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAMI X-PRO | FIX EDITION</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+
+    <style>
+        :root { --bg: #0d0d0f; --card: #1a1a1e; --accent: #fbbf24; }
+        body { background: var(--bg); color: white; font-family: system-ui; margin: 0; }
+        
+        #player-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        video { width: 100%; height: 100%; outline: none; }
+
+        .nav-btn { flex: 1; padding: 12px; border-radius: 8px; background: var(--card); font-weight: bold; transition: 0.2s; }
+        .nav-btn.active { background: var(--accent); color: black; }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .item-card {
+            background: var(--card);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+        }
+
+        .item-card img { width: 100%; aspect-ratio: 1/1.4; object-fit: cover; background: #222; }
+        
+        #loader { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2000; }
+        
+        .cat-bar { display: flex; overflow-x: auto; gap: 8px; padding: 10px 15px; scrollbar-width: none; }
+        .cat-item { shrink: 0; padding: 6px 15px; border-radius: 20px; background: var(--card); font-size: 12px; cursor: pointer; }
+        .cat-item.active { background: var(--accent); color: black; }
+    </style>
+</head>
+<body>
+
+    <div id="player-container">
+        <video id="video" controls autoplay playsinline></video>
+    </div>
+
+    <div class="flex gap-2 p-3">
+        <button onclick="switchMode('get_live_streams', 'get_live_categories', this)" class="nav-btn active">مباشر</button>
+        <button onclick="switchMode('get_vod_streams', 'get_vod_categories', this)" class="nav-btn">أفلام</button>
+        <button onclick="switchMode('get_series', 'get_series_categories', this)" class="nav-btn">مسلسلات</button>
+    </div>
+
+    <div id="catBar" class="cat-bar"></div>
+
+    <main id="grid" class="content-grid"></main>
+
+    <div id="loader">
+        <div class="w-10 h-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <script>
+        const CFG = {
+            host: "http://ottpro.iptvpro2.com:8789",
+            u: "Oujakr12",
+            p: "87593226",
+            // تم استخدام بروكسي أكثر قوة لتجاوز حظر المتصفح
+            proxy: "https://api.allorigins.win/get?url="
+        };
+
+        let currentType = 'get_live_streams';
+        let shakaPlayer;
+
+        // تهيئة المشغل
+        async function initApp() {
+            shaka.polyfils.installAll();
+            if (shaka.Player.isBrowserSupported()) {
+                shakaPlayer = new shaka.Player(document.getElementById('video'));
+                shakaPlayer.addEventListener('error', (e) => console.error('Error code', e.detail.code, 'object', e.detail));
+            }
+            switchMode('get_live_streams', 'get_live_categories', document.querySelector('.nav-btn'));
+        }
+
+        async function request(action, extra = "") {
+            document.getElementById('loader').style.display = 'block';
+            const url = `${CFG.host}/player_api.php?username=${CFG.u}&password=${CFG.p}&action=${action}${extra}`;
+            try {
+                const res = await fetch(CFG.proxy + encodeURIComponent(url));
+                const json = await res.json();
+                return JSON.parse(json.contents);
+            } catch (e) {
+                alert("خطأ في الاتصال بالسيرفر");
+                return null;
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        async function switchMode(action, catAction, btn) {
+            currentType = action;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const cats = await request(catAction);
+            renderCats(cats);
+            loadItems('all');
+        }
+
+        function renderCats(cats) {
+            const bar = document.getElementById('catBar');
+            bar.innerHTML = `<div class="cat-item active" onclick="loadItems('all', this)">الكل</div>`;
+            if(cats) cats.forEach(c => {
+                bar.innerHTML += `<div class="cat-item" onclick="loadItems('${c.category_id}', this)">${c.category_name}</div>`;
+            });
+        }
+
+        async function loadItems(id, btn) {
+            if(btn) {
+                document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            const extra = id === 'all' ? '' : `&category_id=${id}`;
+            const data = await request(currentType, extra);
+            renderGrid(data || []);
+        }
+
+        function renderGrid(items) {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            items.slice(0, 100).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'item-card';
+                const img = item.stream_icon || item.cover || 'https://via.placeholder.com/150x200?text=No+Image';
+                div.innerHTML = `<img src="${img}"><p class="p-1 text-[10px] truncate text-center">${item.name}</p>`;
+                div.onclick = () => play(item);
+                grid.appendChild(div);
+            });
+        }
+
+        async function play(item) {
+            const video = document.getElementById('video');
+            const map = { 'get_live_streams': 'live', 'get_vod_streams': 'movie', 'get_series': 'series' };
+            const id = item.stream_id || item.series_id || item.vod_id;
+            const ext = item.container_extension || (currentType === 'get_live_streams' ? 'ts' : 'mp4');
+            
+            // الرابط المباشر
+            const streamUrl = `${CFG.host}/${map[currentType]}/${CFG.u}/${CFG.p}/${id}.${ext}`;
+
+            console.log("Attempting to play:", streamUrl);
+
+            // محاولة التشغيل
+            try {
+                if (ext === 'm3u8') {
+                    await shakaPlayer.load(streamUrl);
+                } else {
+                    // للملفات المباشرة مثل TS و MP4
+                    shakaPlayer.unload();
+                    video.src = streamUrl;
+                    video.play();
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (e) {
+                // إذا فشل المشغل الداخلي، نستخدم نافذة خارجية (الحل المضمون)
+                console.error("Playback failed, trying alternative...");
+                if (confirm("المتصفح يمنع التشغيل المباشر، هل تريد فتح القناة في مشغل خارجي؟")) {
+                    window.location.href = streamUrl;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
