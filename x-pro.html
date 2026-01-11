@@ -405,6 +405,216 @@
         document.getElementById('year').textContent = new Date().getFullYear();
         window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
     </script>
+    <script>
+
+        const API_CONFIG = { base: "http://ottpro.iptvpro2.com:8789", user: "Oujakr12", pass: "87593226" };
+
+        const PROXY = "https://api.allorigins.win/get?url="; // بروكسي لحل مشكلة CORS و HTTP
+
+
+
+        const player = new Plyr('#player');
+
+        const video = document.getElementById('player');
+
+        const hls = new Hls();
+
+        let fullData = [], displayedCount = 42, currentMode = 'get_live_streams';
+
+
+
+        // دالة جلب البيانات باستخدام البروكسي
+
+        async function fetchData(url) {
+
+            const response = await fetch(PROXY + encodeURIComponent(url));
+
+            if (!response.ok) throw new Error('Network error');
+
+            const data = await response.json();
+
+            return JSON.parse(data.contents); // AllOrigins يضع النتيجة داخل contents كـ string
+
+        }
+
+
+
+        async function switchMode(action, catAction, btn) {
+
+            currentMode = action;
+
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+
+            btn.classList.add('active');
+
+            await fetchCategories(catAction, action);
+
+        }
+
+
+
+        async function fetchCategories(catAction, streamAction) {
+
+            const container = document.getElementById('catsWrapper');
+
+            container.innerHTML = "جاري التحميل...";
+
+            try {
+
+                const url = `${API_CONFIG.base}/player_api.php?username=${API_CONFIG.user}&password=${API_CONFIG.pass}&action=${catAction}`;
+
+                const cats = await fetchData(url);
+
+                container.innerHTML = `<button onclick="fetchContent('${streamAction}', 'all')" class="cat-btn active">الكل</button>`;
+
+                cats.forEach(cat => {
+
+                    const b = document.createElement('button');
+
+                    b.className = "cat-btn"; b.innerText = cat.category_name;
+
+                    b.onclick = () => fetchContent(streamAction, cat.category_id);
+
+                    container.appendChild(b);
+
+                });
+
+                fetchContent(streamAction, 'all');
+
+            } catch(e) { container.innerHTML = "خطأ في الاتصال"; }
+
+        }
+
+
+
+        async function fetchContent(action, catId) {
+
+            const grid = document.getElementById('contentGrid');
+
+            grid.innerHTML = "جاري جلب المحتوى...";
+
+            let url = `${API_CONFIG.base}/player_api.php?username=${API_CONFIG.user}&password=${API_CONFIG.pass}&action=${action}`;
+
+            if(catId !== 'all') url += `&category_id=${catId}`;
+
+            try {
+
+                fullData = await fetchData(url);
+
+                displayedCount = 42;
+
+                renderItems();
+
+            } catch(e) { grid.innerHTML = "تعذر تحميل البيانات"; }
+
+        }
+
+
+
+        function renderItems() {
+
+            const grid = document.getElementById('contentGrid');
+
+            const list = fullData.slice(0, displayedCount);
+
+            grid.innerHTML = list.map(item => `
+
+                <div onclick="playStream('${item.stream_id || item.series_id || item.vod_id}', '${item.container_extension || 'm3u8'}')" class="media-card">
+
+                    <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo" onerror="this.src='https://via.placeholder.com/150'">
+
+                    <p class="media-title">${item.name}</p>
+
+                </div>
+
+            `).join('');
+
+            document.getElementById('loadMore').style.display = fullData.length > displayedCount ? 'block' : 'none';
+
+        }
+
+
+
+        function playStream(id, ext) {
+
+            let type = (currentMode === 'get_live_streams') ? "live" : (currentMode === 'get_vod_streams' ? "movie" : "series");
+
+            let format = (currentMode === 'get_live_streams') ? "m3u8" : (ext || "mp4");
+
+            const streamUrl = `${API_CONFIG.base}/${type}/${API_CONFIG.user}/${API_CONFIG.pass}/${id}.${format}`;
+
+            
+
+            if (Hls.isSupported() && format === 'm3u8') {
+
+                hls.loadSource(streamUrl); hls.attachMedia(video);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+
+            } else {
+
+                video.src = streamUrl;
+
+                video.play().catch(e => alert("عذراً، هذا الرابط لا يعمل في المتصفح"));
+
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        }
+
+
+
+        function toggleTheme() {
+
+            document.body.classList.toggle('light-mode');
+
+            const isLight = document.body.classList.contains('light-mode');
+
+            document.getElementById('themeIcon').className = isLight ? 'fas fa-sun text-yellow-500' : 'fas fa-moon';
+
+        }
+
+
+
+        function toggleSidebar() {
+
+            document.getElementById('sidebar').classList.toggle('open');
+
+            document.querySelector('.sidebar-overlay').classList.toggle('open');
+
+        }
+
+
+
+        function showModal(type) {
+
+            const modal = document.getElementById('infoModal');
+
+            document.getElementById('modalTitle').innerText = type === 'about' ? 'من نحن' : 'اتصل بنا';
+
+            document.getElementById('modalBody').innerText = type === 'about' ? 'منصة DAMI X-PRO للبث الرقمي.' : 'واتساب: +212640059730';
+
+            modal.style.display = 'flex';
+
+        }
+
+
+
+        window.onscroll = () => {
+
+            const btn = document.getElementById("backToTop");
+
+            btn.classList.toggle('show', window.scrollY > 400);
+
+        };
+
+
+
+        window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
+
+    </script>
+
 
 </body>
 </html>
