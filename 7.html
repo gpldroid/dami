@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAMI X-PRO | WEB VIEWER EDITION</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.plain.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr-level-selector-plugin@latest/dist/level-selector.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #08080a;
+            --bg-card: #141417;
+            --accent: #facc15;
+            --border: rgba(255, 255, 255, 0.05);
+        }
+
+        body { background-color: var(--bg-body); color: white; font-family: sans-serif; }
+
+        /* حاوية المشغل */
+        #video-wrapper {
+            width: 100%;
+            background: #000;
+            aspect-ratio: 16 / 9;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+        }
+
+        .nav-btn {
+            flex: 1; padding: 12px; border-radius: 12px; font-weight: bold;
+            background: var(--bg-card); border: 1px solid var(--border); transition: 0.3s;
+        }
+        .nav-btn.active { background: var(--accent); color: black; border-color: var(--accent); }
+
+        .item-card {
+            background: var(--bg-card); border-radius: 10px; overflow: hidden;
+            border: 1px solid var(--border); cursor: pointer; transition: 0.2s;
+        }
+        .item-card:hover { border-color: var(--accent); transform: scale(1.02); }
+
+        .skeleton { background: #1a1a1e; animation: pulse 1.5s infinite linear; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div id="video-wrapper">
+        <div id="player" style="width: 100%; height: 100%;"></div>
+    </div>
+
+    <div class="flex gap-2 p-4">
+        <button onclick="changeContext('get_live_streams', 'get_live_categories', this)" class="nav-btn active">مباشر</button>
+        <button onclick="changeContext('get_vod_streams', 'get_vod_categories', this)" class="nav-btn">أفلام</button>
+        <button onclick="changeContext('get_series', 'get_series_categories', this)" class="nav-btn">مسلسلات</button>
+    </div>
+
+    <div class="px-4 space-y-3">
+        <div class="relative">
+            <input type="text" id="searchInput" placeholder="ابحث عن اسم القناة أو الفيلم..." 
+                   class="w-full bg-[var(--bg-card)] border border-[var(--border)] p-3 pr-10 rounded-xl outline-none focus:border-[var(--accent)]">
+            <i class="fas fa-search absolute right-3 top-4 text-gray-500"></i>
+        </div>
+        <div id="catBox" class="flex gap-2 overflow-x-auto pb-2 no-scrollbar"></div>
+    </div>
+
+    <main id="mainGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4"></main>
+
+    <div id="loading" class="hidden text-center py-10">
+        <div class="inline-block w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            base: "http://ottpro.iptvpro2.com:8789",
+            user: "Oujakr12",
+            pass: "87593226",
+            proxy: "https://api.allorigins.win/get?url="
+        };
+
+        let currentAction = 'get_live_streams';
+        let mainData = [];
+        let clapprPlayer;
+
+        // تهيئة المشغل لأول مرة
+        function initPlayer(sourceUrl) {
+            if (clapprPlayer) clapprPlayer.destroy();
+            
+            clapprPlayer = new Clappr.Player({
+                source: sourceUrl,
+                parentId: "#player",
+                width: '100%',
+                height: '100%',
+                autoPlay: true,
+                plugins: [LevelSelector],
+                preload: 'auto',
+                mediacontrol: {seekbar: '#facc15', buttons: '#facc15'},
+                mimeType: sourceUrl.includes('m3u8') ? 'application/x-mpegURL' : 'video/mp4'
+            });
+        }
+
+        async function apiCall(action, extra = "") {
+            const url = `${CONFIG.base}/player_api.php?username=${CONFIG.user}&password=${CONFIG.pass}&action=${action}${extra}`;
+            document.getElementById('loading').classList.remove('hidden');
+            try {
+                const resp = await fetch(CONFIG.proxy + encodeURIComponent(url));
+                const data = await resp.json();
+                return JSON.parse(data.contents);
+            } catch (e) { return null; }
+            finally { document.getElementById('loading').classList.add('hidden'); }
+        }
+
+        async function changeContext(action, catAction, btn) {
+            currentAction = action;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const cats = await apiCall(catAction);
+            renderCats(cats);
+            loadItems('all');
+        }
+
+        function renderCats(cats) {
+            const box = document.getElementById('catBox');
+            box.innerHTML = `<button onclick="loadItems('all', this)" class="shrink-0 px-4 py-1.5 rounded-full bg-[var(--accent)] text-black text-sm font-bold">الكل</button>`;
+            cats.forEach(c => {
+                box.innerHTML += `<button onclick="loadItems('${c.category_id}', this)" class="shrink-0 px-4 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border)] text-gray-300 text-sm font-bold">${c.category_name}</button>`;
+            });
+        }
+
+        async function loadItems(catId, btn) {
+            if(btn) {
+                document.querySelectorAll('#catBox button').forEach(b => {
+                    b.className = "shrink-0 px-4 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border)] text-gray-300 text-sm font-bold";
+                });
+                btn.className = "shrink-0 px-4 py-1.5 rounded-full bg-[var(--accent)] text-black text-sm font-bold";
+            }
+            const extra = catId === 'all' ? '' : `&category_id=${catId}`;
+            mainData = await apiCall(currentAction, extra) || [];
+            renderGrid(mainData.slice(0, 60));
+        }
+
+        function renderGrid(data) {
+            const grid = document.getElementById('mainGrid');
+            grid.innerHTML = '';
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                const img = item.stream_icon || item.cover || 'https://via.placeholder.com/200x300/141417/FFFFFF?text=DAMI+PRO';
+                card.innerHTML = `
+                    <div class="aspect-[2/3] bg-zinc-900 relative">
+                        <img data-src="${img}" class="lazy w-full h-full object-cover opacity-0 transition-opacity duration-300">
+                        <div class="absolute inset-0 skeleton"></div>
+                    </div>
+                    <p class="p-2 text-[11px] font-bold truncate text-center">${item.name}</p>
+                `;
+                card.onclick = () => playMedia(item);
+                grid.appendChild(card);
+            });
+            setupLazyLoad();
+        }
+
+        function playMedia(item) {
+            const typeMap = { 'get_live_streams': 'live', 'get_vod_streams': 'movie', 'get_series': 'series' };
+            const type = typeMap[currentAction];
+            const ext = item.container_extension || (type === 'live' ? 'm3u8' : 'mp4');
+            const streamId = item.stream_id || item.series_id || item.vod_id;
+            
+            // استخدام رابط الـ Direct Stream لتجاوز مشكلة الصيغة
+            const finalUrl = `${CONFIG.base}/${type}/${CONFIG.user}/${CONFIG.pass}/${streamId}.${ext}`;
+            
+            initPlayer(finalUrl);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setupLazyLoad() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.onload = () => {
+                            img.classList.remove('opacity-0');
+                            img.nextElementSibling.style.display = 'none';
+                        };
+                        observer.unobserve(img);
+                    }
+                });
+            });
+            document.querySelectorAll('.lazy').forEach(img => observer.observe(img));
+        }
+
+        document.getElementById('searchInput').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = mainData.filter(i => i.name.toLowerCase().includes(val));
+            renderGrid(filtered.slice(0, 60));
+        };
+
+        window.onload = () => changeContext('get_live_streams', 'get_live_categories', document.querySelector('.nav-btn'));
+    </script>
+</body>
+</html>
