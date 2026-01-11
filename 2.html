@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAMI X-PRO | PRO EDITION</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-body: #0a0a0c;
+            --bg-card: #16161a;
+            --accent: #d4af37;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --border: rgba(255, 255, 255, 0.05);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .light-mode {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: rgba(0, 0, 0, 0.05);
+        }
+
+        body { background-color: var(--bg-body); color: var(--text-primary); font-family: sans-serif; transition: var(--transition); margin: 0; }
+        .player-container { position: sticky; top: 0; z-index: 100; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; }
+        .nav-container { display: flex; background: var(--bg-card); margin: 1rem; padding: 0.4rem; border-radius: 16px; border: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 0.8rem; border-radius: 12px; font-weight: 600; color: var(--text-secondary); transition: var(--transition); }
+        .tab-btn.active { background: var(--accent); color: #000; }
+        .categories-bar { display: flex; overflow-x: auto; gap: 10px; padding: 0 1rem 1rem; scrollbar-width: none; }
+        .cat-chip { white-space: nowrap; padding: 0.5rem 1.2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50px; font-size: 0.85rem; cursor: pointer; }
+        .cat-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(212, 175, 55, 0.1); }
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 12px; padding: 1rem; }
+        .card { background: var(--bg-card); border-radius: 14px; overflow: hidden; border: 1px solid var(--border); transition: var(--transition); cursor: pointer; }
+        .card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .card-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; background: #1e1e24; }
+        .card-info { padding: 8px; font-size: 0.75rem; text-align: center; font-weight: bold; }
+        .search-box { position: relative; margin: 0 1rem 1rem; }
+        .search-box input { width: 100%; background: var(--bg-card); border: 1px solid var(--border); padding: 12px 15px 12px 45px; border-radius: 12px; color: var(--text-primary); outline: none; }
+        #loader { display: none; text-align: center; padding: 2rem; color: var(--accent); }
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(212, 175, 55, 0.1); border-left-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* تنبيه الأمان */
+        #securityAlert { display: none; background: #ef4444; color: white; padding: 10px; text-align: center; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="securityAlert">إذا لم يعمل الفيديو: اضغط على القفل بجانب الرابط ثم إعدادات الموقع ثم فعل (Insecure Content)</div>
+
+    <header class="p-4 flex justify-between items-center bg-[var(--bg-card)] border-b border-[var(--border)]">
+        <h1 class="text-xl font-bold" style="color: var(--accent);">DAMI <span class="text-white">X-PRO</span></h1>
+        <button onclick="toggleTheme()"><i class="fas fa-adjust"></i></button>
+    </header>
+
+    <div class="player-container">
+        <video id="player" playsinline controls></video>
+    </div>
+
+    <nav class="nav-container">
+        <button onclick="switchContext('get_live_streams', 'get_live_categories', this)" class="tab-btn active">مباشر</button>
+        <button onclick="switchContext('get_vod_streams', 'get_vod_categories', this)" class="tab-btn">أفلام</button>
+        <button onclick="switchContext('get_series', 'get_series_categories', this)" class="tab-btn">مسلسلات</button>
+    </nav>
+
+    <div class="search-box">
+        <input type="text" id="mainSearch" placeholder="ابحث هنا...">
+    </div>
+
+    <div id="categoryBar" class="categories-bar"></div>
+
+    <div id="loader"><div class="spinner"></div></div>
+
+    <main id="contentGrid" class="content-grid"></main>
+
+    <div id="loadMoreBtn" class="hidden p-8 text-center">
+        <button onclick="loadMore()" class="bg-[var(--bg-card)] border border-[var(--border)] px-10 py-2 rounded-full text-sm">عرض المزيد</button>
+    </div>
+
+    <script>
+        const CONFIG = {
+            base: "http://ottpro.iptvpro2.com:8789",
+            user: "Oujakr12",
+            pass: "87593226",
+            proxy: "https://api.allorigins.win/get?url=",
+            pageSize: 30
+        };
+
+        let state = { currentAction: 'get_live_streams', fullData: [], filteredData: [], currentPage: 1, cache: new Map() };
+        const player = new Plyr('#player');
+        const hls = new Hls();
+
+        async function apiRequest(action, extra = "") {
+            const url = `${CONFIG.base}/player_api.php?username=${CONFIG.user}&password=${CONFIG.pass}&action=${action}${extra}`;
+            if (state.cache.has(action + extra)) return state.cache.get(action + extra);
+            
+            document.getElementById('loader').style.display = 'block';
+            try {
+                const response = await fetch(CONFIG.proxy + encodeURIComponent(url));
+                const data = await response.json();
+                const result = JSON.parse(data.contents);
+                state.cache.set(action + extra, result);
+                return result;
+            } catch (err) { return null; } finally { document.getElementById('loader').style.display = 'none'; }
+        }
+
+        async function switchContext(action, catAction, element) {
+            state.currentAction = action;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            element.classList.add('active');
+            const categories = await apiRequest(catAction);
+            if (categories) {
+                document.getElementById('categoryBar').innerHTML = `<div class="cat-chip active" onclick="loadContent('all', this)">الكل</div>` + 
+                    categories.map(c => `<div class="cat-chip" onclick="loadContent('${c.category_id}', this)">${c.category_name}</div>`).join('');
+                loadContent('all');
+            }
+        }
+
+        async function loadContent(catId, element) {
+            if (element) {
+                document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+                element.classList.add('active');
+            }
+            const data = await apiRequest(state.currentAction, catId === 'all' ? '' : `&category_id=${catId}`);
+            if (data) { state.fullData = data; state.filteredData = data; state.currentPage = 1; renderGrid(); }
+        }
+
+        function renderGrid(append = false) {
+            const grid = document.getElementById('contentGrid');
+            if (!append) grid.innerHTML = '';
+            const items = state.filteredData.slice((state.currentPage-1)*CONFIG.pageSize, state.currentPage*CONFIG.pageSize);
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="card-img"><div class="card-info">${item.name}</div>`;
+                card.onclick = () => playMedia(item);
+                grid.appendChild(card);
+            });
+            document.getElementById('loadMoreBtn').classList.toggle('hidden', state.currentPage*CONFIG.pageSize >= state.filteredData.length);
+        }
+
+        function loadMore() { state.currentPage++; renderGrid(true); }
+
+        function playMedia(item) {
+            const type = state.currentAction.includes('live') ? 'live' : (state.currentAction.includes('vod') ? 'movie' : 'series');
+            const ext = item.container_extension || (type === 'live' ? 'm3u8' : 'mp4');
+            const id = item.stream_id || item.series_id || item.vod_id;
+            const streamUrl = `${CONFIG.base}/${type}/${CONFIG.user}/${CONFIG.pass}/${id}.${ext}`;
+            const videoElement = document.getElementById('player');
+
+            document.getElementById('securityAlert').style.display = 'block'; // إظهار التنبيه عند التشغيل
+
+            if (ext === 'm3u8' || type === 'live') {
+                hls.destroy();
+                if (Hls.isSupported()) {
+                    hls.loadSource(streamUrl);
+                    hls.attachMedia(videoElement);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play().catch(() => {}));
+                }
+            } else {
+                videoElement.src = streamUrl;
+                videoElement.play().catch(() => {});
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.getElementById('mainSearch').oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            state.filteredData = state.fullData.filter(i => i.name.toLowerCase().includes(term));
+            state.currentPage = 1;
+            renderGrid();
+        };
+
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        window.onload = () => switchContext('get_live_streams', 'get_live_categories', document.querySelector('.tab-btn'));
+    </script>
+</body>
+</html>
