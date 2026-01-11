@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAMI X-PRO | ULTRA PLAYER EDITION</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #050505;
+            --bg-card: #121214;
+            --accent: #eab308;
+            --text-primary: #ffffff;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+        }
+
+        /* تحسين شكل المشغل ليناسب التصميم */
+        .video-js {
+            width: 100% !important;
+            height: auto !important;
+            aspect-ratio: 16 / 9;
+            border-bottom: 2px solid var(--accent);
+        }
+        .vjs-big-play-button {
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            border-radius: 50% !important;
+            width: 2em !important;
+            height: 2em !important;
+            line-height: 2em !important;
+            background-color: rgba(234, 179, 8, 0.8) !important;
+        }
+
+        .nav-tab {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #121214 25%, #1a1a1c 50%, #121214 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        @keyframes loading { to { background-position: -200% 0; } }
+
+        /* تخصيص السكرول بار */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <header class="sticky top-0 z-[100] bg-[#050505]/90 backdrop-blur-md p-4 flex justify-between items-center border-b border-[var(--border)]">
+        <h1 class="text-2xl font-black italic tracking-tighter text-[var(--accent)]">DAMI <span class="text-white not-italic">X-PRO</span></h1>
+        <div class="flex gap-3">
+            <button class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-[var(--border)]">
+                <i class="fas fa-search text-gray-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="w-full bg-black shadow-2xl">
+        <video id="main-player" class="video-js vjs-big-play-centered vjs-fluid" controls preload="auto" playsinline>
+            <p class="vjs-no-js">يرجى تفعيل الجافا سكريبت لتشغيل الفيديو</p>
+        </video>
+    </div>
+
+    <div class="p-4 grid grid-cols-3 gap-2">
+        <button onclick="changeSection('get_live_streams', 'get_live_categories', this)" class="nav-tab py-3 rounded-xl font-bold bg-[var(--accent)] text-black shadow-lg shadow-yellow-500/10">مباشر</button>
+        <button onclick="changeSection('get_vod_streams', 'get_vod_categories', this)" class="nav-tab py-3 rounded-xl font-bold bg-white/5 text-gray-400 border border-[var(--border)]">أفلام</button>
+        <button onclick="changeSection('get_series', 'get_series_categories', this)" class="nav-tab py-3 rounded-xl font-bold bg-white/5 text-gray-400 border border-[var(--border)]">مسلسلات</button>
+    </div>
+
+    <div class="px-4 space-y-4">
+        <input type="text" id="searchInput" placeholder="ابحث عن المحتوى..." class="w-full bg-white/5 border border-[var(--border)] p-3 rounded-xl focus:border-[var(--accent)] outline-none transition-all">
+        <div id="catList" class="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth"></div>
+    </div>
+
+    <main id="mainGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 p-4"></main>
+
+    <div id="loader" class="hidden flex flex-col items-center py-20">
+        <div class="w-10 h-10 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 text-sm text-gray-500 font-medium">جاري تحديث المكتبة...</p>
+    </div>
+
+    <script>
+        const API = {
+            base: "http://ottpro.iptvpro2.com:8789",
+            user: "Oujakr12",
+            pass: "87593226",
+            proxy: "https://api.allorigins.win/get?url="
+        };
+
+        let currentAction = 'get_live_streams';
+        let allItems = [];
+        let cache = new Map();
+
+        // تهيئة مشغل Video.js
+        const player = videojs('main-player', {
+            fluid: true,
+            playbackRates: [0.5, 1, 1.5, 2],
+            userActions: { hotkeys: true },
+            html5: { vhs: { overrideNative: true }, nativeAudioTracks: false, nativeVideoTracks: false }
+        });
+
+        async function fetchData(action, extra = "") {
+            const url = `${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=${action}${extra}`;
+            if (cache.has(url)) return cache.get(url);
+
+            document.getElementById('loader').classList.remove('hidden');
+            try {
+                const response = await fetch(API.proxy + encodeURIComponent(url));
+                const json = await response.json();
+                const data = JSON.parse(json.contents);
+                cache.set(url, data);
+                return data;
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                return null;
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        }
+
+        async function changeSection(action, catAction, btn) {
+            currentAction = action;
+            document.querySelectorAll('.nav-tab').forEach(b => {
+                b.className = "nav-tab py-3 rounded-xl font-bold bg-white/5 text-gray-400 border border-[var(--border)]";
+            });
+            btn.className = "nav-tab py-3 rounded-xl font-bold bg-[var(--accent)] text-black shadow-lg shadow-yellow-500/10";
+            
+            const cats = await fetchData(catAction);
+            renderCats(cats);
+            loadContent('all');
+        }
+
+        function renderCats(cats) {
+            const div = document.getElementById('catList');
+            div.innerHTML = `<button onclick="loadContent('all', this)" class="shrink-0 px-5 py-2 rounded-full bg-[var(--accent)] text-black text-xs font-bold active-cat">الكل</button>`;
+            cats.forEach(c => {
+                div.innerHTML += `<button onclick="loadContent('${c.category_id}', this)" class="shrink-0 px-5 py-2 rounded-full bg-white/5 border border-[var(--border)] text-gray-300 text-xs font-bold">${c.category_name}</button>`;
+            });
+        }
+
+        async function loadContent(id, btn) {
+            if(btn) {
+                document.querySelectorAll('#catList button').forEach(b => {
+                    b.className = "shrink-0 px-5 py-2 rounded-full bg-white/5 border border-[var(--border)] text-gray-300 text-xs font-bold";
+                });
+                btn.className = "shrink-0 px-5 py-2 rounded-full bg-[var(--accent)] text-black text-xs font-bold";
+            }
+
+            const extra = id === 'all' ? '' : `&category_id=${id}`;
+            const data = await fetchData(currentAction, extra);
+            allItems = data || [];
+            renderGrid(allItems.slice(0, 50)); // تحميل أول 50 عنصر فوراً للسرعة
+        }
+
+        function renderGrid(data) {
+            const grid = document.getElementById('mainGrid');
+            grid.innerHTML = '';
+            
+            data.forEach(item => {
+                const img = item.stream_icon || item.cover || 'https://via.placeholder.com/150x220/121214/FFFFFF?text=No+Image';
+                const card = document.createElement('div');
+                card.className = 'card rounded-xl overflow-hidden cursor-pointer';
+                card.innerHTML = `
+                    <div class="relative aspect-[2/3] bg-[#1a1a1c]">
+                        <img data-src="${img}" class="lazy w-full h-full object-cover opacity-0 transition-opacity duration-300">
+                        <div class="absolute inset-0 skeleton"></div>
+                    </div>
+                    <div class="p-2 text-[10px] font-bold truncate text-center text-gray-300">${item.name}</div>
+                `;
+                card.onclick = () => play(item);
+                grid.appendChild(card);
+            });
+            lazyLoad();
+        }
+
+        function play(item) {
+            const typeMap = { 'get_live_streams': 'live', 'get_vod_streams': 'movie', 'get_series': 'series' };
+            const type = typeMap[currentAction];
+            const ext = item.container_extension || (type === 'live' ? 'm3u8' : 'mp4');
+            const streamUrl = `${API.base}/${type}/${API.user}/${API.pass}/${item.stream_id || item.series_id || item.vod_id}.${ext}`;
+
+            player.src({
+                src: streamUrl,
+                type: ext === 'm3u8' ? 'application/x-mpegURL' : 'video/mp4'
+            });
+
+            player.play();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function lazyLoad() {
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if(e.isIntersecting) {
+                        const img = e.target;
+                        img.src = img.dataset.src;
+                        img.onload = () => {
+                            img.classList.remove('opacity-0');
+                            img.nextElementSibling.remove();
+                        };
+                        obs.unobserve(img);
+                    }
+                });
+            });
+            document.querySelectorAll('.lazy').forEach(i => obs.observe(i));
+        }
+
+        // بحث متطور
+        document.getElementById('searchInput').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allItems.filter(i => i.name.toLowerCase().includes(val));
+            renderGrid(filtered.slice(0, 50));
+        };
+
+        window.onload = () => changeSection('get_live_streams', 'get_live_categories', document.querySelector('.nav-tab'));
+    </script>
+</body>
+</html>
