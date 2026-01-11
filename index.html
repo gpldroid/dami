@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAMI X-PRO | عماد الدين لمراني</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-body: #050505;
+            --bg-card: #121212;
+            --bg-sidebar: rgba(18, 18, 18, 0.95);
+            --text-main: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-color: #d4af37;
+            --border-color: rgba(212, 175, 55, 0.15);
+            --radius-card: 16px;
+        }
+
+        .light-mode {
+            --bg-body: #F0F2F5;
+            --bg-card: #FFFFFF;
+            --text-main: #050505;
+            --text-secondary: #65676B;
+            --accent-color: #1877F2;
+            --border-color: #dddfe2;
+        }
+
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: sans-serif; transition: 0.3s; margin: 0; padding-bottom: 60px; }
+        header { background: var(--bg-card); padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+        .player-wrapper { background: #000; width: 100%; aspect-ratio: 16/9; }
+        .nav-tabs { display: flex; background: var(--bg-card); margin: 10px; border-radius: 12px; padding: 5px; gap: 5px; }
+        .mode-btn { flex: 1; padding: 10px; font-size: 13px; font-weight: bold; color: var(--text-secondary); border-radius: 8px; cursor: pointer; border: none; background: transparent; }
+        .mode-btn.active { color: var(--accent-color); background: rgba(212, 175, 55, 0.1); border-bottom: 2px solid var(--accent-color); }
+        .cat-scroll-area { display: flex; overflow-x: auto; gap: 8px; padding: 10px; scrollbar-width: none; }
+        .cat-btn { white-space: nowrap; padding: 6px 15px; border-radius: 20px; font-size: 12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; }
+        .cat-btn.active { background: var(--accent-color); color: #fff; }
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 15px; }
+        .media-card { background: var(--bg-card); border-radius: 12px; padding: 8px; text-align: center; border: 1px solid var(--border-color); cursor: pointer; }
+        .media-logo { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; margin-bottom: 5px; }
+        .media-title { font-size: 11px; font-weight: 600; height: 2.6em; overflow: hidden; }
+        .search-input { width: calc(100% - 30px); margin: 0 15px; background: var(--bg-card); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 20px; color: var(--text-main); outline: none; }
+        #loadMore { margin: 20px auto; display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="flex items-center gap-3">
+            <span class="font-black" style="color:var(--accent-color)">DAMI X-PRO</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="cursor-pointer" onclick="toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></div>
+        </div>
+    </header>
+
+    <div class="player-wrapper">
+        <video id="player" playsinline controls></video>
+    </div>
+
+    <div class="nav-tabs">
+        <button onclick="switchMode('get_live_streams', 'get_live_categories', this)" class="mode-btn active">مباشر</button>
+        <button onclick="switchMode('get_vod_streams', 'get_vod_categories', this)" class="mode-btn">أفلام</button>
+        <button onclick="switchMode('get_series', 'get_series_categories', this)" class="mode-btn">مسلسلات</button>
+    </div>
+
+    <div id="catsWrapper" class="cat-scroll-area"></div>
+
+    <input id="searchBar" type="text" class="search-input" placeholder="ابحث هنا...">
+
+    <main>
+        <div id="contentGrid" class="content-grid"></div>
+        <div id="loadMore" class="text-center">
+            <button onclick="renderMore()" class="px-8 py-2 rounded-full bg-gray-500/20 text-sm">عرض المزيد</button>
+        </div>
+    </main>
+
+    <script>
+        // إعدادات الـ API مع الوسيط Proxy
+        const API = { 
+            base: "http://ottpro.iptvpro2.com:8789", 
+            user: "Oujakr12", 
+            pass: "87593226",
+            proxy: "https://api.allorigins.win/get?url=" // هذا هو الوسيط السحري
+        };
+
+        const player = new Plyr('#player');
+        const video = document.getElementById('player');
+        const hls = new Hls();
+        let fullData = [], displayedCount = 42, currentMode = 'get_live_streams';
+
+        // دالة جلب البيانات عبر الوسيط
+        async function fetchData(action, extra = "") {
+            const targetUrl = `${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=${action}${extra}`;
+            const finalUrl = `${API.proxy}${encodeURIComponent(targetUrl)}`;
+            
+            try {
+                const response = await fetch(finalUrl);
+                const json = await response.json();
+                // AllOrigins يعيد البيانات داخل حقل contents
+                return JSON.parse(json.contents);
+            } catch (e) {
+                console.error("Fetch Error:", e);
+                return null;
+            }
+        }
+
+        async function switchMode(action, catAction, btn) {
+            currentMode = action;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const catsWrapper = document.getElementById('catsWrapper');
+            catsWrapper.innerHTML = "جاري التحميل...";
+            
+            const cats = await fetchData(catAction);
+            if (cats) {
+                catsWrapper.innerHTML = `<button onclick="fetchContent('${action}', 'all', this)" class="cat-btn active">الكل</button>`;
+                cats.forEach(cat => {
+                    const b = document.createElement('button');
+                    b.className = "cat-btn";
+                    b.innerText = cat.category_name;
+                    b.onclick = (e) => {
+                        document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+                        e.target.classList.add('active');
+                        fetchContent(action, cat.category_id);
+                    };
+                    catsWrapper.appendChild(b);
+                });
+                fetchContent(action, 'all');
+            }
+        }
+
+        async function fetchContent(action, catId) {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = "جاري جلب البيانات...";
+            
+            let extra = catId !== 'all' ? `&category_id=${catId}` : "";
+            const data = await fetchData(action, extra);
+            
+            if (data) {
+                fullData = data;
+                displayedCount = 42;
+                renderItems();
+            } else {
+                grid.innerHTML = "حدث خطأ في الاتصال بالسيرفر";
+            }
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('contentGrid');
+            const list = fullData.slice(0, displayedCount);
+            grid.innerHTML = list.map(item => `
+                <div onclick="playStream('${item.stream_id || item.series_id || item.vod_id}', '${item.container_extension || 'm3u8'}')" class="media-card">
+                    <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo" loading="lazy" onerror="this.src='https://via.placeholder.com/150'">
+                    <p class="media-title">${item.name}</p>
+                </div>
+            `).join('');
+            document.getElementById('loadMore').style.display = fullData.length > displayedCount ? 'block' : 'none';
+        }
+
+        function renderMore() { displayedCount += 42; renderItems(); }
+
+        function playStream(id, ext) {
+            let type = (currentMode === 'get_live_streams') ? "live" : (currentMode === 'get_vod_streams' ? "movie" : "series");
+            let format = (currentMode === 'get_live_streams') ? "m3u8" : (ext || "mp4");
+            const streamUrl = `${API.base}/${type}/${API.user}/${API.pass}/${id}.${format}`;
+            
+            if (format === 'm3u8' && Hls.isSupported()) {
+                hls.loadSource(streamUrl); hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else {
+                video.src = streamUrl; video.play();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        document.getElementById('searchBar').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = fullData.filter(i => i.name && i.name.toLowerCase().includes(val));
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = filtered.slice(0, 42).map(item => `
+                <div onclick="playStream('${item.stream_id || item.series_id}', 'm3u8')" class="media-card">
+                    <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo">
+                    <p class="media-title">${item.name}</p>
+                </div>
+            `).join('');
+        };
+
+        window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
+    </script>
+</body>
+</html>
