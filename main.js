@@ -1,4 +1,4 @@
-        const API = { base: "https://ottpro.iptvpro2.com:8789", user: "Oujakr12", pass: "87593226" };
+        const API = { base: "http://ottpro.iptvpro2.com:8789", user: "Oujakr12", pass: "87593226" };
         const player = new Plyr('#player', { controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'] });
         const video = document.getElementById('player');
         const hls = new Hls();
