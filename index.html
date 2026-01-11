@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="DAMI X-PRO - أفضل منصة لمشاهدة القنوات والأفلام والمسلسلات. حمل التطبيق الآن واستمتع بتجربة مشاهدة فريدة.">
+    <meta name="keywords" content="DAMI X-PRO, IPTV, Live TV, Movies, Series, بث مباشر, أفلام, مسلسلات, تطبيق DAMI">
+    <meta name="author" content="Imad Eddine Lamrani">
+
+    <title>DAMI X-PRO | عماد الدين لمراني</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <<link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="flex justify-between items-center mb-8">
+            <span class="text-xl font-black tracking-tighter" style="color:var(--accent-color)">DAMI X-PRO</span>
+            <i class="fas fa-times cursor-pointer text-xl" onclick="toggleSidebar()"></i>
+        </div>
+        <nav>
+            <div class="sidebar-link" onclick="toggleSidebar(); window.scrollTo(0,0)"><i class="fas fa-home"></i> <span data-translate="home">الرئيسية</span></div>
+            <div class="sidebar-link" onclick="showModal('about')"><i class="fas fa-info-circle"></i> <span data-translate="about_us">من نحن</span></div>
+            <div class="sidebar-link" onclick="showModal('contact')"><i class="fas fa-envelope"></i> <span data-translate="contact_us">اتصل بنا</span></div>
+            <div class="sidebar-link" onclick="showModal('privacy')"><i class="fas fa-user-shield"></i> <span data-translate="privacy_policy">سياسة الخصوصية</span></div>
+            <div class="sidebar-link" onclick="showModal('terms')"><i class="fas fa-file-contract"></i> <span data-translate="terms_use">شروط الاستخدام</span></div>
+            <hr class="border-gray-700/20 my-4">
+            <a href="#" class="sidebar-link" style="color: var(--accent-color);"><i class="fab fa-android"></i> <span data-translate="download_app">تحميل التطبيق</span></a>
+        </nav>
+    </aside>
+
+    <header>
+        <div class="flex items-center gap-3">
+            <i class="fas fa-bars menu-btn" onclick="toggleSidebar()"></i>
+            <span class="font-black tracking-tight" style="color:var(--accent-color)">DAMI X-PRO</span>
+        </div>
+        <div class="header-actions">
+            <select class="lang-select" onchange="changeLanguage(this.value)">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+            </select>
+            <div class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-gray-500/10" onclick="toggleTheme()">
+                <i class="fas fa-moon text-sm" id="themeIcon"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="player-wrapper">
+        <video id="player" playsinline controls crossorigin></video>
+    </div>
+
+    <div class="nav-tabs">
+        <button onclick="switchMode('get_live_streams', 'get_live_categories', this)" class="mode-btn active"><i class="fas fa-tv block mb-1"></i> <span data-translate="live">مباشر</span></button>
+        <button onclick="switchMode('get_vod_streams', 'get_vod_categories', this)" class="mode-btn"><i class="fas fa-film block mb-1"></i> <span data-translate="movies">أفلام</span></button>
+        <button onclick="switchMode('get_series', 'get_series_categories', this)" class="mode-btn"><i class="fas fa-layer-group block mb-1"></i> <span data-translate="series">مسلسلات</span></button>
+    </div>
+
+    <div id="catsWrapper" class="cat-scroll-area"><div class="text-xs opacity-50 px-2" data-translate="loading">جاري التحميل...</div></div>
+
+    <div class="search-container">
+        <div class="relative">
+            <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 opacity-40 rtl-icon"></i>
+            <input id="searchBar" type="text" class="search-input" placeholder="ابحث هنا..." data-translate-placeholder="search_placeholder">
+        </div>
+    </div>
+
+    <main>
+        <div id="contentGrid" class="content-grid"></div>
+        <div id="loadMore" class="text-center py-8 hidden"><button onclick="renderMore()" class="px-8 py-2 rounded-full text-sm font-bold bg-gray-500/20"><span data-translate="load_more">عرض المزيد</span></button></div>
+    </main>
+
+    <section class="app-download-section">
+        <h2 class="text-2xl font-bold mb-2" data-translate="download_title">حمل تطبيق DAMI X-PRO</h2>
+        <p class="text-sm opacity-70 mb-4 max-w-md mx-auto" data-translate="download_desc">احصل على أفضل تجربة مشاهدة مع تطبيقنا الرسمي. سرعة، ثبات، وجودة عالية.</p>
+        <a href="#" class="download-btn"><i class="fab fa-android text-xl"></i> <span data-translate="download_now">تحميل للأندرويد</span></a>
+    </section>
+    <a href="https://wa.me/212640059730" target="_blank" class="floating-btn whatsapp-btn"><i class="fab fa-whatsapp"></i></a>
+    <button id="backToTop" class="floating-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
+
+    <div id="infoModal" class="info-modal" onclick="if(event.target===this) this.style.display='none'">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700/20 pb-2">
+                <h3 id="modalTitle" class="text-lg font-bold text-[var(--accent-color)]"></h3>
+                <i class="fas fa-times cursor-pointer" onclick="document.getElementById('infoModal').style.display='none'"></i>
+            </div>
+            <div id="modalBody" class="text-sm leading-relaxed opacity-90"></div>
+        </div>
+    </div>
+
+    <footer style="text-align:center;">
+        <p>DAMI X-PRO &copy; <span id="year"></span></p>
+        <p class="opacity-100 text-[12px]" data-translate="footer_rights">جميع الحقوق محفوظة للمطور عماد الدين لمراني</p>
+    </footer>
+
+
+</body>
+</html>
