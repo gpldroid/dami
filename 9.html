@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAMI X-PRO | المطور عماد الدين</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-body: #050505; --bg-card: #121212; --text-main: #ffffff;
+            --accent-color: #d4af37; --border-color: rgba(212, 175, 55, 0.15);
+            --radius-card: 16px;
+        }
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: sans-serif; margin: 0; padding-bottom: 60px; overflow-x: hidden;}
+        header { background: var(--bg-card); padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--border-color); }
+        .player-wrapper { background: #000; width: 100%; position: relative; }
+        .nav-tabs { display: flex; background: var(--bg-card); margin: 15px; border-radius: var(--radius-card); padding: 5px; gap: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .mode-btn { flex: 1; padding: 12px; font-size: 14px; color: #aaa; border: none; background: transparent; cursor: pointer; transition: 0.3s; }
+        .mode-btn.active { color: var(--accent-color); background: rgba(212, 175, 55, 0.1); border-radius: 12px; font-weight: bold; }
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; padding: 15px; }
+        .media-card { background: var(--bg-card); border-radius: 12px; padding: 8px; text-align: center; border: 1px solid var(--border-color); cursor: pointer; transition: 0.3s; }
+        .media-card:hover { transform: scale(1.05); border-color: var(--accent-color); }
+        .media-logo { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 8px; background: #222; }
+        .cat-scroll-area { display: flex; overflow-x: auto; gap: 8px; padding: 10px; scrollbar-width: none; }
+        .cat-btn { white-space: nowrap; padding: 6px 18px; border-radius: 20px; background: var(--bg-card); color: #fff; border: 1px solid var(--border-color); font-size: 12px; cursor: pointer; }
+        .cat-btn.active { background: var(--accent-color); color: #000; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<script>
+    // 1. نظام حظر متصفح جوجل كروم
+    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && !/Edg/.test(navigator.userAgent) && !/OPR/.test(navigator.userAgent);
+    if (isChrome) {
+        document.body.innerHTML = `<div style="height:100vh; display:flex; align-items:center; justify-content:center; background:#050505; color:#d4af37; text-align:center; padding:20px; font-family:sans-serif;">
+            <div><i class="fas fa-exclamation-triangle" style="font-size:50px; margin-bottom:20px;"></i>
+            <h1 style="font-size:24px;">المتصفح غير مدعوم</h1>
+            <p style="color:#ccc; margin-top:10px;">عذراً، تطبيقنا لا يعمل على متصفح كروم لدواعي أمنية وفنية.<br>يرجى استخدام <b>Firefox</b> أو <b>Safari</b> أو <b>Edge</b>.</p></div>
+        </div>`;
+        window.stop();
+    }
+</script>
+
+<header>
+    <div class="flex items-center gap-2">
+        <i class="fas fa-play-circle text-2xl" style="color:var(--accent-color)"></i>
+        <span class="text-xl font-black tracking-tighter" style="color:var(--accent-color)">DAMI X-PRO</span>
+    </div>
+    <div class="text-[10px] bg-green-500/20 text-green-500 px-2 py-1 rounded">سيرفر نشط</div>
+</header>
+
+<div class="player-wrapper">
+    <video id="player" playsinline controls crossorigin></video>
+</div>
+
+<div class="nav-tabs">
+    <button onclick="switchMode('get_live_streams', 'get_live_categories', this)" class="mode-btn active"><i class="fas fa-tv mr-1"></i> مباشر</button>
+    <button onclick="switchMode('get_vod_streams', 'get_vod_categories', this)" class="mode-btn"><i class="fas fa-film mr-1"></i> أفلام</button>
+    <button onclick="switchMode('get_series', 'get_series_categories', this)" class="mode-btn"><i class="fas fa-layer-group mr-1"></i> مسلسلات</button>
+</div>
+
+<div id="catsWrapper" class="cat-scroll-area"></div>
+<main id="contentGrid" class="content-grid"></main>
+
+<script>
+    const API = { base: "http://ottpro.iptvpro2.com:8789", user: "Oujakr12", pass: "87593226" };
+    const PROXY = "https://api.allorigins.win/get?url=";
+    
+    const video = document.getElementById('player');
+    const player = new Plyr(video, { 
+        tooltips: { controls: true, seek: true },
+        i18n: { captions: 'الترجمة', quality: 'الجودة', speed: 'السرعة' }
+    });
+    const hls = new Hls();
+
+    let fullData = [], currentMode = 'get_live_streams';
+
+    async function fetchData(url) {
+        try {
+            const res = await fetch(PROXY + encodeURIComponent(url));
+            const data = await res.json();
+            return JSON.parse(data.contents);
+        } catch (e) { return []; }
+    }
+
+    async function switchMode(action, catAction, btn) {
+        currentMode = action;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const cats = await fetchData(`${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=${catAction}`);
+        const container = document.getElementById('catsWrapper');
+        container.innerHTML = `<button onclick="loadContent('all')" class="cat-btn active">الكل</button>`;
+        
+        cats.forEach(cat => {
+            const b = document.createElement('button');
+            b.className = "cat-btn";
+            b.innerText = cat.category_name;
+            b.onclick = (e) => {
+                document.querySelectorAll('.cat-btn').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                loadContent(cat.category_id);
+            };
+            container.appendChild(b);
+        });
+        loadContent('all');
+    }
+
+    async function loadContent(catId) {
+        const grid = document.getElementById('contentGrid');
+        grid.innerHTML = "<div class='col-span-full text-center opacity-50 py-10'>جاري تحميل المكتبة...</div>";
+        let url = `${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=${currentMode}`;
+        if(catId !== 'all') url += `&category_id=${catId}`;
+        
+        fullData = await fetchData(url);
+        grid.innerHTML = fullData.slice(0, 60).map(item => `
+            <div class="media-card" onclick="prepareMedia('${item.stream_id || item.series_id || item.vod_id}', '${item.container_extension || 'mp4'}')">
+                <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150x225?text=No+Poster'}" class="media-logo" onerror="this.src='https://via.placeholder.com/150x225?text=DAMI+X-PRO'" loading="lazy">
+                <p class="text-[11px] mt-2 font-bold truncate">${item.name}</p>
+            </div>
+        `).join('');
+    }
+
+    // دالة تجلب تفاصيل الفيديو (للترجمة) قبل التشغيل
+    async function prepareMedia(id, ext) {
+        let subUrl = null;
+        
+        if (currentMode === 'get_vod_streams') {
+            const info = await fetchData(`${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=get_vod_info&vod_id=${id}`);
+            // محاولة إيجاد ترجمة في بيانات السيرفر
+            if (info && info.info && info.info.subtitles && info.info.subtitles.length > 0) {
+                subUrl = info.info.subtitles[0]; // نأخذ أول ترجمة متوفرة
+            }
+        }
+        playMedia(id, ext, subUrl);
+    }
+
+    function playMedia(id, ext, subtitle) {
+        let type = (currentMode === 'get_live_streams') ? "live" : (currentMode === 'get_vod_streams' ? "movie" : "series");
+        let finalExt = (currentMode === 'get_live_streams') ? "m3u8" : (ext || "mp4");
+        const streamUrl = `${API.base}/${type}/${API.user}/${API.pass}/${id}.${finalExt}`;
+
+        hls.detachMedia();
+        video.pause();
+        
+        // إزالة التراكات القديمة (الترجمة)
+        while (video.firstChild) { video.removeChild(video.firstChild); }
+
+        // إضافة الترجمة إذا وجدت
+        if (subtitle) {
+            const track = document.createElement('track');
+            track.kind = 'captions';
+            track.label = 'العربية';
+            track.srclang = 'ar';
+            track.src = subtitle;
+            track.default = true;
+            video.appendChild(track);
+        }
+
+        if (finalExt === 'm3u8' && Hls.isSupported()) {
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else {
+            video.src = streamUrl;
+            video.play().catch(e => console.log("Playback error"));
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
+</script>
+<footer class="text-center py-4 opacity-30 text-[10px]">
+    DAMI X-PRO &copy; 2026 - جميع الحقوق محفوظة
+</footer>
+</body>
+</html>
