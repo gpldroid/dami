@@ -6,13 +6,13 @@
     <meta name="description" content="DAMI X-PRO - أفضل منصة لمشاهدة القنوات والأفلام والمسلسلات بجودة عالية">
     <meta name="keywords" content="DAMI X-PRO, IPTV, Live TV, Movies, Series, Imad Eddine Lamrani">
     <meta name="author" content="Imad Eddine Lamrani">
-    
+   <meta http-equiv="Content-Security-Policy" content="block-all-mixed-content; upgrade-insecure-requests">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta property="og:title" content="DAMI X-PRO | عماد الدين لمراني">
     <meta property="og:description" content="أفضل منصة لمشاهدة القنوات والأفلام والمسلسلات بجودة عالية">
     <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/2965/2965363.png">
     
-    <title>DAMI X-PRO | عماد الدين لمراني</title>
-    
+    <title>DAMI X-PRO | عماد الدين لمراني</title>    
     <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/512/2965/2965363.png" type="image/x-icon">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -333,6 +333,34 @@
             document.getElementById('year').textContent = new Date().getFullYear();
             changeLanguage('ar');
         });
+    </script>
+    <script>
+        function playStreamForcefully(streamUrl) {
+    const video = document.getElementById('player');
+    
+    // إذا كان الرابط http والموقع https، كروم قد يمنعه
+    // نقوم بتشغيل المكتبة التي تقرأ البيانات كـ "قطع" (Segments)
+    if (Hls.isSupported()) {
+        const hls = new Hls({
+            // هذا الخيار يخبر المكتبة بتجاهل بعض أخطاء الأمان وتجربة التحميل
+            xhrSetup: function (xhr, url) {
+                xhr.withCredentials = false; // لتجنب مشاكل الـ Cookies بين http و https
+            }
+        });
+        
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play().catch(e => {
+                console.log("يجب التفاعل مع الصفحة أولاً ليتم التشغيل تلقائياً");
+            });
+        });
+    } 
+    // إذا كان المتصفح يدعم hls أصلاً (مثل سفاري)
+    else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+    }
+}
     </script>
 </body>
 </html>
