@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="DAMI X-PRO - أفضل منصة لمشاهدة القنوات والأفلام والمسلسلات. حمل التطبيق الآن واستمتع بتجربة مشاهدة فريدة.">
+    <meta name="keywords" content="DAMI X-PRO, IPTV, Live TV, Movies, Series, بث مباشر, أفلام, مسلسلات, تطبيق DAMI">
+    <meta name="author" content="Imad Eddine Lamrani">
+
+    <title>DAMI X-PRO | عماد الدين لمراني</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <!-- Preconnect لتسريع التحميل -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://cdn.plyr.io">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- CSS Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ==================== نظام الألوان ==================== */
+        :root {
+            --bg-body: #050505;
+            --bg-card: #121212;
+            --bg-sidebar: rgba(18, 18, 18, 0.95);
+            --text-main: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-color: #d4af37;
+            --accent-hover: #f1c40f;
+            --border-color: rgba(212, 175, 55, 0.15);
+            --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+            --gradient-accent: linear-gradient(135deg, #d4af37 0%, #bf953f 100%);
+            --radius-card: 16px;
+        }
+
+        .light-mode {
+            --bg-body: #F0F2F5;
+            --bg-card: #FFFFFF;
+            --bg-sidebar: #FFFFFF;
+            --text-main: #050505;
+            --text-secondary: #65676B;
+            --accent-color: #1877F2;
+            --accent-hover: #166fe5;
+            --border-color: #dddfe2;
+            --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.1);
+            --gradient-accent: linear-gradient(135deg, #1877F2 0%, #1877F2 100%);
+            --radius-card: 8px;
+        }
+
+        body { 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            transition: background 0.3s ease, color 0.3s ease; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0;
+            overflow-x: hidden;
+            padding-bottom: 60px;
+        }
+        
+        header { 
+            background: var(--bg-card); 
+            padding: 0.8rem 1rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        .menu-btn { font-size: 1.2rem; cursor: pointer; padding: 5px 10px; }
+
+        .lang-select {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .lang-select option { background: var(--bg-card); color: var(--text-main); }
+
+        .player-wrapper { background: #000; width: 100%; position: relative; z-index: 40; }
+
+        .nav-tabs { 
+            display: flex; background: var(--bg-card); margin: 15px auto;
+            max-width: 800px; border-radius: var(--radius-card); padding: 5px; gap: 5px;
+            box-shadow: var(--shadow-card);
+        }
+        .mode-btn { 
+            flex: 1; padding: 10px; font-size: 13px; font-weight: 600; 
+            color: var(--text-secondary); border-radius: var(--radius-card);
+            background: transparent; border: none; cursor: pointer; transition: 0.2s;
+        }
+        .mode-btn.active { 
+            color: var(--accent-color); 
+            background: rgba(128,128,128,0.05);
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .cat-scroll-area { display: flex; overflow-x: auto; gap: 8px; padding: 10px 15px; scrollbar-width: none; }
+        .cat-btn { 
+            white-space: nowrap; padding: 6px 16px; border-radius: 20px; font-size: 12px; 
+            background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); 
+            cursor: pointer; transition: 0.2s;
+        }
+        .cat-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        body:not(.light-mode) .cat-btn.active { background: var(--gradient-accent); color: #000; font-weight: bold; }
+
+        .search-container { max-width: 800px; margin: 10px auto; padding: 0 15px; }
+        .search-input {
+            width: 100%; background: var(--bg-card); border: 1px solid var(--border-color);
+            padding: 12px 40px 12px 20px; border-radius: 30px; color: var(--text-main);
+            outline: none; transition: 0.3s;
+        }
+
+        .content-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px; padding: 15px; max-width: 1400px; margin: 0 auto;
+        }
+        .media-card { 
+            background: var(--bg-card); border-radius: var(--radius-card); padding: 8px; 
+            text-align: center; border: 1px solid var(--border-color); transition: 0.3s;
+            cursor: pointer; position: relative;
+        }
+        .media-card:hover { transform: translateY(-3px); border-color: var(--accent-color); }
+        .media-logo { width: 100%; aspect-ratio: 1/1; object-fit: contain; border-radius: 8px; margin-bottom: 5px; }
+        .media-title { font-size: 11px; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+
+        .sidebar {
+            position: fixed; top: 0; right: -280px; width: 260px; height: 100%;
+            background: var(--bg-sidebar); backdrop-filter: blur(10px);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+            z-index: 2000; transition: 0.4s ease;
+            display: flex; flex-direction: column; padding: 20px;
+        }
+        .sidebar.open { right: 0; }
+        .sidebar-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1999;
+            display: none; opacity: 0; transition: 0.3s;
+        }
+        .sidebar-overlay.open { display: block; opacity: 1; }
+        .sidebar-link { display: flex; align-items: center; padding: 12px; color: var(--text-main); text-decoration: none; border-radius: 10px; cursor: pointer; }
+        .sidebar-link i { width: 25px; color: var(--accent-color); }
+
+        .app-download-section {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            padding: 30px 20px; margin-top: 40px; text-align: center;
+        }
+        .download-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: var(--gradient-accent); color: #fff; font-weight: bold;
+            padding: 12px 30px; border-radius: 50px; text-decoration: none; margin-top: 15px;
+        }
+        #loadMore{
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            padding:10px 8px;
+            border-radius:5px;
+        }
+           .px-8{
+               background:#4E5DFF!important;color:#FDFFF2;
+               border-radius: var(--radius-card); padding: 5px; gap: 5px;
+            box-shadow: var(--shadow-card);
+    
+               
+           }
+        /* Floating Buttons - Fixed Z-index for Fullscreen */
+        .floating-btn {
+            position: fixed; width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 30; /* Less than player z-index (40) when fullscreen */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: 0.3s; cursor: pointer; color: #fff; text-decoration: none;
+        }
+        #backToTop { bottom: 30px; left: 30px; background: var(--accent-color); opacity: 0; pointer-events: none; }
+        #backToTop.show { opacity: 1; pointer-events: all; }
+        .whatsapp-btn { bottom: 90px; left: 30px; background: #25D366; font-size: 24px; }
+
+        .info-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000;
+            display: none; align-items: center; justify-content: center; padding: 1rem;
+        }
+        .modal-content {
+            background: var(--bg-card); width: 90%; max-width: 500px;
+            padding: 25px; border-radius: var(--radius-card); border: 1px solid var(--border-color);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .match-card:hover {
+            background-color: #1e293b; /* bg-slate-800 */
+        }
+        /* Modal styles */
+        #setup-modal { transition: opacity 0.3s ease; }
+        .modal-content {
+            max-height: 80vh;
+        }
+        .space-y-6{
+            overflow:scroll;
+            height: 500px;
+            width:100%;
+        }
+        /* Active filter button style */
+        .btn-filter-active {
+            background-color: #10b981 !important; /* bg-emerald-500 */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="flex justify-between items-center mb-8">
+            <span class="text-xl font-black tracking-tighter" style="color:var(--accent-color)">DAMI X-PRO</span>
+            <i class="fas fa-times cursor-pointer text-xl" onclick="toggleSidebar()"></i>
+        </div>
+        <nav>
+            <div class="sidebar-link" onclick="toggleSidebar(); window.scrollTo(0,0)"><i class="fas fa-home"></i> <span data-translate="home">الرئيسية</span></div>
+            <div class="sidebar-link" onclick="showModal('about')"><i class="fas fa-info-circle"></i> <span data-translate="about_us">من نحن</span></div>
+            <div class="sidebar-link" onclick="showModal('contact')"><i class="fas fa-envelope"></i> <span data-translate="contact_us">اتصل بنا</span></div>
+            <div class="sidebar-link" onclick="showModal('privacy')"><i class="fas fa-user-shield"></i> <span data-translate="privacy_policy">سياسة الخصوصية</span></div>
+            <div class="sidebar-link" onclick="showModal('terms')"><i class="fas fa-file-contract"></i> <span data-translate="terms_use">شروط الاستخدام</span></div>
+            <hr class="border-gray-700/20 my-4">
+            <a href="#" class="sidebar-link" style="color: var(--accent-color);"><i class="fab fa-android"></i> <span data-translate="download_app">تحميل التطبيق</span></a>
+        </nav>
+    </aside>
+
+    <header>
+        <div class="flex items-center gap-3">
+            <i class="fas fa-bars menu-btn" onclick="toggleSidebar()"></i>
+            <span class="font-black tracking-tight" style="color:var(--accent-color)">DAMI X-PRO</span>
+        </div>
+        <div class="header-actions">
+            <select class="lang-select" onchange="changeLanguage(this.value)">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+            </select>
+            <div class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-gray-500/10" onclick="toggleTheme()">
+                <i class="fas fa-moon text-sm" id="themeIcon"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="player-wrapper">
+        <video id="player" playsinline controls crossorigin></video>
+    </div>
+
+    <div class="nav-tabs">
+        <button onclick="switchMode('get_live_streams', 'get_live_categories', this)" class="mode-btn active"><i class="fas fa-tv block mb-1"></i> <span data-translate="live">مباشر</span></button>
+        <button onclick="switchMode('get_vod_streams', 'get_vod_categories', this)" class="mode-btn"><i class="fas fa-film block mb-1"></i> <span data-translate="movies">أفلام</span></button>
+        <button onclick="switchMode('get_series', 'get_series_categories', this)" class="mode-btn"><i class="fas fa-layer-group block mb-1"></i> <span data-translate="series">مسلسلات</span></button>
+    </div>
+
+    <div id="catsWrapper" class="cat-scroll-area"><div class="text-xs opacity-50 px-2" data-translate="loading">جاري التحميل...</div></div>
+
+    <div class="search-container">
+        <div class="relative">
+            <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 opacity-40 rtl-icon"></i>
+            <input id="searchBar" type="text" class="search-input" placeholder="ابحث هنا..." data-translate-placeholder="search_placeholder">
+        </div>
+    </div>
+
+    <main>
+        <div id="contentGrid" class="content-grid"></div>
+        <div id="loadMore" class="text-center py-8 hidden"><button onclick="renderMore()" class="px-8 py-2 rounded-full text-sm font-bold bg-gray-500/20"><span data-translate="load_more">عرض المزيد</span></button></div>
+    </main>
+
+
+    <a href="https://wa.me/212783539816" target="_blank" class="floating-btn whatsapp-btn"><i class="fab fa-whatsapp"></i></a>
+    <button id="backToTop" class="floating-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
+
+    <div id="infoModal" class="info-modal" onclick="if(event.target===this) this.style.display='none'">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700/20 pb-2">
+                <h3 id="modalTitle" class="text-lg font-bold text-[var(--accent-color)]"></h3>
+                <i class="fas fa-times cursor-pointer" onclick="document.getElementById('infoModal').style.display='none'"></i>
+            </div>
+            <div id="modalBody" class="text-sm leading-relaxed opacity-90"></div>
+        </div>
+    </div>
+
+<div class="text-white">
+
+    <!-- Preferences Modal (for first-time users) -->
+    <div id="setup-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl modal-content flex flex-col">
+            <div class="p-6 border-b border-slate-700">
+                <h2 class="text-2xl font-bold text-center">تخصيص تجربتك</h2>
+                <p class="text-slate-400 text-center mt-1">اختر دورياتك وفرقك المفضلة لعرضها أولاً.</p>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">الدوريات والبطولات المفضلة</h3>
+                    <div id="favorite-leagues-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto p-2 bg-slate-900 rounded-lg">
+                        <!-- Leagues will be populated here -->
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">الفرق المفضلة</h3>
+                    <div id="favorite-teams-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto p-2 bg-slate-900 rounded-lg">
+                        <!-- Teams will be populated here -->
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-900/50 border-t border-slate-700 text-center">
+                <button id="save-preferences-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">حفظ و متابعة</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="container mx-auto p-4 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center my-8">
+            <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">DIMA X-PRO</h1>
+            <p class="text-slate-400 mt-2">جدول مباريات اليوم وأكثر</p>
+        </header>
+        
+        <!-- Controls -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-3 rounded-xl mb-6 space-y-4">
+            <!-- Date Navigation -->
+            <div class="flex items-center justify-center gap-2">
+                <button id="next-day-btn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">الغد &larr;</button>
+                <input type="date" id="date-picker" class="bg-slate-700 border-slate-600 rounded-lg p-2 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500 w-36 text-center">
+                <button id="prev-day-btn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">&rarr; الأمس</button>
+            </div>
+            <!-- Filters -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-2">
+                <select id="league-filter" class="w-full sm:w-64 bg-slate-700 border-slate-600 rounded-lg p-2.5 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="all">كل الدوريات</option>
+                </select>
+                <button id="live-filter-btn" class="w-full sm:w-auto px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors font-semibold">مباريات مباشرة</button>
+            </div>
+        </div>
+
+        <!-- Matches Container -->
+        <main id="matches-container" class="space-y-6"></main>
+
+        <!-- Message/Error Display -->
+        <div id="message-display" class="text-center p-8 text-slate-400 hidden"></div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const datePicker = document.getElementById('date-picker');
+        const matchesContainer = document.getElementById('matches-container');
+        const messageDisplay = document.getElementById('message-display');
+        const leagueFilter = document.getElementById('league-filter');
+        const prevDayBtn = document.getElementById('prev-day-btn');
+        const nextDayBtn = document.getElementById('next-day-btn');
+        const setupModal = document.getElementById('setup-modal');
+        const savePreferencesBtn = document.getElementById('save-preferences-btn');
+        const favLeaguesList = document.getElementById('favorite-leagues-list');
+        const favTeamsList = document.getElementById('favorite-teams-list');
+        const liveFilterBtn = document.getElementById('live-filter-btn');
+
+        // API & State
+        const API_HOST = 'v3.football.api-sports.io';
+        const apiKey = 'f88cf80a044a1682123e60dc0bb05f4a';
+        let allMatchesData = []; 
+        let showOnlyLive = false;
+        const priorityOrder = [1, 4, 9, 21, 8, 2, 3, 39, 140, 135, 78, 61, 45, 528, 143, 137, 81, 848, 203, 10];
+
+        // --- PREFERENCES & SETUP ---
+        function showSetupModal() {
+            populateSetupLists();
+            setupModal.classList.remove('hidden');
+        }
+
+        function savePreferences() {
+            const selectedLeagues = Array.from(favLeaguesList.querySelectorAll('input:checked')).map(el => el.value);
+            const selectedTeams = Array.from(favTeamsList.querySelectorAll('input:checked')).map(el => el.value);
+            localStorage.setItem('kooralist_prefs', JSON.stringify({ leagues: selectedLeagues, teams: selectedTeams, setupComplete: true }));
+            setupModal.classList.add('hidden');
+            fetchMatches(datePicker.value);
+        }
+
+        function populateSetupLists() {
+            const majorLeagues = [
+                { id: 1, name: 'World Cup' }, { id: 4, name: 'Euro Championship' },
+                { id: 21, name: 'Africa Cup of Nations' }, { id: 8, name: 'African Nations Championship' },
+                { id: 2, name: 'Champions League' }, { id: 3, name: 'Europa League' },
+                { id: 39, name: 'Premier League' }, { id: 140, name: 'La Liga' },
+                { id: 135, name: 'Serie A' }, { id: 78, name: 'Bundesliga' },
+                { id: 45, name: 'FA Cup' }, { id: 528, name: 'Community Shield' },
+                { id: 848, name: 'Saudi Pro League'}, { id: 203, name: 'Egyptian Premier League'}
+            ];
+            const majorTeams = [
+                { id: 33, name: 'Man United' }, { id: 40, name: 'Liverpool' }, { id: 42, name: 'Arsenal' },
+                { id: 50, name: 'Man City' }, { id: 529, name: 'Barcelona' }, { id: 541, name: 'Real Madrid' },
+                { id: 489, name: 'AC Milan' }, { id: 496, name: 'Juventus' }, { id: 157, name: 'Bayern Munich' },
+                { id: 85, name: 'PSG' }, { id: 631, name: 'Al Nassr' }, { id: 643, name: 'Al Hilal' }
+            ];
+
+            favLeaguesList.innerHTML = majorLeagues.map(l => `
+                <label class="flex items-center gap-2 bg-slate-700/50 p-2 rounded-md cursor-pointer hover:bg-slate-700">
+                    <input type="checkbox" value="${l.id}" class="form-checkbox h-5 w-5 rounded bg-slate-900 border-slate-600 text-emerald-500 focus:ring-emerald-600">
+                    <span class="text-sm">${l.name}</span>
+                </label>`).join('');
+            
+            favTeamsList.innerHTML = majorTeams.map(t => `
+                <label class="flex items-center gap-2 bg-slate-700/50 p-2 rounded-md cursor-pointer hover:bg-slate-700">
+                    <input type="checkbox" value="${t.id}" class="form-checkbox h-5 w-5 rounded bg-slate-900 border-slate-600 text-emerald-500 focus:ring-emerald-600">
+                    <span class="text-sm">${t.name}</span>
+                </label>`).join('');
+        }
+
+        // --- RENDERING ---
+        function renderFixtures(data) {
+            matchesContainer.innerHTML = '';
+            const selectedLeagueId = leagueFilter.value;
+            
+            const liveStatuses = ['1H', 'HT', '2H', 'ET', 'P'];
+            let filteredMatches = showOnlyLive 
+                ? data.filter(m => liveStatuses.includes(m.fixture.status.short))
+                : data;
+
+            if (selectedLeagueId !== 'all') {
+                filteredMatches = filteredMatches.filter(m => m.league.id == selectedLeagueId);
+            }
+
+            if (filteredMatches.length === 0) {
+                messageDisplay.textContent = 'لا توجد مباريات تطابق الفلتر المحدد.';
+                messageDisplay.classList.remove('hidden');
+                return;
+            }
+            messageDisplay.classList.add('hidden');
+            
+            const leaguesMap = new Map();
+            filteredMatches.forEach(match => {
+                const leagueId = match.league.id;
+                if (!leaguesMap.has(leagueId)) {
+                    leaguesMap.set(leagueId, { leagueInfo: match.league, matches: [] });
+                }
+                leaguesMap.get(leagueId).matches.push(match);
+            });
+
+            const prefs = JSON.parse(localStorage.getItem('kooralist_prefs')) || { leagues: [], teams: [] };
+            
+            const sortedLeagues = Array.from(leaguesMap.values()).sort((a, b) => {
+                const aIsFav = prefs.leagues.includes(a.leagueInfo.id.toString());
+                const bIsFav = prefs.leagues.includes(b.leagueInfo.id.toString());
+                if (aIsFav && !bIsFav) return -1;
+                if (!aIsFav && bIsFav) return 1;
+
+                const aPrio = priorityOrder.indexOf(a.leagueInfo.id);
+                const bPrio = priorityOrder.indexOf(b.leagueInfo.id);
+                if (aPrio !== -1 && bPrio !== -1) return aPrio - bPrio;
+                if (aPrio !== -1) return -1;
+                if (bPrio !== -1) return 1;
+                
+                return a.leagueInfo.name.localeCompare(b.leagueInfo.name);
+            });
+
+            sortedLeagues.forEach(leagueGroup => {
+                const leagueContainer = document.createElement('div');
+                leagueContainer.className = 'bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl overflow-hidden';
+                leagueContainer.innerHTML = `
+                    <div class="bg-slate-900/70 px-4 py-3 border-b border-slate-700 flex items-center gap-3">
+                        <img src="${leagueGroup.leagueInfo.logo}" alt="${leagueGroup.leagueInfo.name}" class="w-6 h-6 object-contain" onerror="this.style.display='none'">
+                        <h2 class="text-lg font-bold text-slate-200">${leagueGroup.leagueInfo.name}</h2>
+                    </div>
+                    <div class="divide-y divide-slate-800">${leagueGroup.matches.map(renderMatch).join('')}</div>`;
+                matchesContainer.appendChild(leagueContainer);
+            });
+        }
+
+        function renderMatch(match) {
+            const { fixture, teams, goals } = match;
+            const timeString = new Date(fixture.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            let statusHTML = '';
+            switch (fixture.status.short) {
+                case 'NS': statusHTML = `<div class="text-lg font-bold text-slate-300">${timeString}</div>`; break;
+                case '1H': case 'HT': case '2H': case 'ET': case 'P':
+                    statusHTML = `<div class="text-center"><div class="text-lg font-bold text-emerald-400">${goals.home ?? 0} - ${goals.away ?? 0}</div><div class="text-xs text-emerald-500 animate-pulse">Live ${fixture.status.elapsed}'</div></div>`; break;
+                case 'FT': case 'AET': case 'PEN':
+                    statusHTML = `<div class="text-center"><div class="text-lg font-bold">${goals.home} - ${goals.away}</div><div class="text-xs text-slate-500">Finished</div></div>`; break;
+                default: statusHTML = `<div class="text-sm text-slate-400">${fixture.status.long}</div>`;
+            }
+            return `<div class="flex items-center justify-between p-4 match-card transition-colors duration-200"><div class="flex items-center gap-3 w-2/5 justify-end"><span class="text-base md:text-lg font-semibold text-right flex-1">${teams.home.name}</span><img src="${teams.home.logo}" alt="${teams.home.name}" class="w-8 h-8 object-contain"></div><div class="w-1/5 text-center">${statusHTML}</div><div class="flex items-center gap-3 w-2/5"><img src="${teams.away.logo}" alt="${teams.away.name}" class="w-8 h-8 object-contain"><span class="text-base md:text-lg font-semibold text-left flex-1">${teams.away.name}</span></div></div>`;
+        }
+        
+        function updateLeagueFilter(data) {
+            if (!data) return;
+            const leaguesInView = [...new Map(data.map(m => [m.league.id, m.league])).values()];
+            
+            // Sort the leagues in the dropdown by importance
+            leaguesInView.sort((a, b) => {
+                const aPrio = priorityOrder.indexOf(a.id);
+                const bPrio = priorityOrder.indexOf(b.id);
+
+                if (aPrio !== -1 && bPrio !== -1) return aPrio - bPrio; // Both are important
+                if (aPrio !== -1) return -1; // a is important, b is not
+                if (bPrio !== -1) return 1; // b is important, a is not
+                
+                return a.name.localeCompare(b.name); // Neither is important, sort alphabetically
+            });
+
+            const currentVal = leagueFilter.value;
+            leagueFilter.innerHTML = '<option value="all">كل الدوريات</option>';
+            leaguesInView.forEach(league => {
+                leagueFilter.innerHTML += `<option value="${league.id}">${league.name}</option>`;
+            });
+            leagueFilter.value = currentVal;
+        }
+
+        // --- DATA FETCHING ---
+        async function fetchMatches(date) {
+            matchesContainer.innerHTML = `<div class="text-center text-slate-400 p-8">جاري تحميل المباريات...</div>`;
+            const url = `https://v3.football.api-sports.io/fixtures?date=${date}`;
+            try {
+                const response = await fetch(url, { method: 'GET', headers: { 'x-rapidapi-host': API_HOST, 'x-rapidapi-key': apiKey } });
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const data = await response.json();
+                // **FIX:** Provide a more detailed error message from the API response
+                if (data.errors && Object.keys(data.errors).length > 0) {
+                    throw new Error(data.errors.token || JSON.stringify(data.errors));
+                }
+                
+                allMatchesData = data.response; // Cache all matches for the day
+                renderFixtures(allMatchesData);
+                updateLeagueFilter(allMatchesData);
+
+            } catch (error) {
+                console.error("Failed to fetch matches:", error);
+                matchesContainer.innerHTML = '';
+                messageDisplay.textContent = `حدث خطأ: ${error.message}.`;
+                messageDisplay.classList.remove('hidden');
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        function handleDateChange(offset) {
+            const currentDate = new Date(datePicker.value);
+            currentDate.setDate(currentDate.getDate() + offset);
+            datePicker.value = currentDate.toISOString().split('T')[0];
+            fetchMatches(datePicker.value);
+        }
+
+        datePicker.addEventListener('change', () => fetchMatches(datePicker.value));
+        prevDayBtn.addEventListener('click', () => handleDateChange(-1));
+        nextDayBtn.addEventListener('click', () => handleDateChange(1));
+        leagueFilter.addEventListener('change', () => renderFixtures(allMatchesData));
+        savePreferencesBtn.addEventListener('click', savePreferences);
+        liveFilterBtn.addEventListener('click', () => {
+            showOnlyLive = !showOnlyLive;
+            liveFilterBtn.classList.toggle('btn-filter-active');
+            renderFixtures(allMatchesData);
+        });
+
+        // --- INITIALIZATION ---
+        function initialize() {
+            const prefs = localStorage.getItem('kooralist_prefs');
+            if (!prefs || !JSON.parse(prefs).setupComplete) {
+                showSetupModal();
+            }
+            const today = new Date();
+            datePicker.value = today.toISOString().split('T')[0];
+            fetchMatches(datePicker.value);
+        }
+
+        initialize();
+    </script>
+</div>
+    <section class="app-download-section">
+        <h2 class="text-2xl font-bold mb-2" data-translate="download_title">حمل تطبيق DAMI X-PRO</h2>
+        <p class="text-sm opacity-70 mb-4 max-w-md mx-auto" data-translate="download_desc">احصل على أفضل تجربة مشاهدة مع تطبيقنا الرسمي. سرعة، ثبات، وجودة عالية.</p>
+        <a href="#" class="download-btn"><i class="fab fa-android text-xl"></i> <span data-translate="download_now">تحميل للأندرويد</span></a>
+    </section>
+    <footer style="text-align:center;">
+        <p>DAMI X-PRO &copy; <span id="year"></span></p>
+        <p class="opacity-100 text-[12px]" data-translate="footer_rights">جميع الحقوق محفوظة للمطور عماد الدين لمراني</p>
+    </footer>
+
+
+    <script>
+        const API = { base: "http://ottpro.iptvpro2.com:8789", user: "Oujakr12", pass: "87593226" };
+        const player = new Plyr('#player', { controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'] });
+        const video = document.getElementById('player');
+        const hls = new Hls();
+        
+        const i18n = {
+            en: { home: "Home", live: "Live TV", movies: "Movies", series: "Series", search_placeholder: "Search channels or movies...", loading: "Loading...", load_more: "Load More", download_title: "Download DAMI X-PRO App", download_desc: "Enjoy the best channels and movies in high quality without interruption.", download_now: "Download Now", download_app: "Download App", about_us: "About Us", contact_us: "Contact Us", privacy_policy: "Privacy Policy", terms_use: "Terms of Use", footer_rights: "All rights reserved to developer Imad Eddine Lamrani", modal_about: "DAMI X-PRO is a leading streaming platform providing high-quality entertainment content.", modal_contact: "Contact us via WhatsApp: +212783539816", modal_privacy: "We respect your privacy. Data is not shared.", modal_terms: "By using this site, you agree not to re-stream content illegally." },
+            fr: { home: "Accueil", live: "Direct", movies: "Films", series: "Séries", search_placeholder: "Rechercher...", loading: "Chargement...", load_more: "Voir plus", download_title: "Télécharger DAMI X-PRO", download_desc: "Profitez des meilleures chaînes et films en haute qualité sans interruption.", download_now: "Télécharger", download_app: "Télécharger l'App", about_us: "À propos", contact_us: "Contactez-nous", privacy_policy: "Confidentialité", terms_use: "Conditions", footer_rights: "Tous droits réservés au développeur Imad Eddine Lamrani", modal_about: "DAMI X-PRO est une plateforme de streaming leader offrant un contenu de haute qualité.", modal_contact: "Contactez-nous via WhatsApp : +212783539816", modal_privacy: "Nous respectons votre vie privée.", modal_terms: "Vous acceptez de ne pas rediffuser le contenu illégalement." },
+            es: { home: "Inicio", live: "En vivo", movies: "Películas", series: "Series", search_placeholder: "Buscar...", loading: "Cargando...", load_more: "Ver más", download_title: "Descargar DAMI X-PRO", download_desc: "Disfruta de los mejores canales y películas en alta calidad.", download_now: "Descargar", download_app: "Descargar App", about_us: "Nosotros", contact_us: "Contacto", privacy_policy: "Privacidad", terms_use: "Condiciones", footer_rights: "Todos los derechos reservados a Imad Eddine Lamrani", modal_about: "DAMI X-PRO es una plataforma de transmisión digital de alta calidad.", modal_contact: "Contáctenos vía WhatsApp: +212783539816", modal_privacy: "Respetamos su privacidad.", modal_terms: "Acepta no retransmitir contenido ilegalmente." }
+        };
+
+        let currentLang = 'ar', currentMode = 'get_live_streams', fullData = [], displayedCount = 42;
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('themeIcon').className = isLight ? 'fas fa-sun text-yellow-500' : 'fas fa-moon text-yellow-100';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.sidebar-overlay').classList.toggle('open');
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+            document.querySelectorAll('[data-translate]').forEach(el => { const key = el.getAttribute('data-translate'); el.innerText = i18n[lang][key]; });
+            document.querySelectorAll('[data-translate-placeholder]').forEach(el => { const key = el.getAttribute('data-translate-placeholder'); el.placeholder = i18n[lang][key]; });
+        }
+
+        function showModal(type) {
+            toggleSidebar();
+            const modal = document.getElementById('infoModal');
+            document.getElementById('modalTitle').innerText = i18n[currentLang][(type === 'about' ? 'about_us' : type === 'contact' ? 'contact_us' : type === 'privacy' ? 'privacy_policy' : 'terms_use')];
+            document.getElementById('modalBody').innerText = i18n[currentLang][`modal_${type}`];
+            modal.style.display = 'flex';
+        }
+
+        async function switchMode(action, catAction, btn) {
+            currentMode = action;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            await fetchCategories(catAction, action);
+        }
+
+        async function fetchCategories(catAction, streamAction) {
+            const container = document.getElementById('catsWrapper');
+            try {
+                const res = await fetch(`${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=${catAction}`);
+                const cats = await res.json();
+                container.innerHTML = `<button onclick="fetchContent('${streamAction}', 'all', this)" class="cat-btn active">الكل</button>`;
+                cats.forEach(cat => {
+                    const b = document.createElement('button');
+                    b.className = "cat-btn"; b.innerText = cat.category_name;
+                    b.onclick = (e) => {
+                        document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+                        e.target.classList.add('active');
+                        fetchContent(streamAction, cat.category_id);
+                    };
+                    container.appendChild(b);
+                });
+                fetchContent(streamAction, 'all');
+            } catch(e) { container.innerHTML = "Error"; }
+        }
+
+        async function fetchContent(action, catId) {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = '<div class="col-span-full text-center py-20 opacity-40">...</div>';
+            let url = `${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=${action}`;
+            if(catId !== 'all') url += `&category_id=${catId}`;
+            try {
+                const res = await fetch(url);
+                fullData = await res.json();
+                displayedCount = 42;
+                renderItems();
+            } catch(e) { grid.innerHTML = "Error"; }
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('contentGrid');
+            const list = fullData.slice(0, displayedCount);
+            grid.innerHTML = list.map(item => `
+                <div onclick="playStream('${item.stream_id || item.series_id || item.vod_id}', '${item.container_extension || 'm3u8'}')" class="media-card">
+                    <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo" loading="lazy">
+                    <p class="media-title">${item.name}</p>
+                </div>
+            `).join('');
+            document.getElementById('loadMore').style.display = fullData.length > displayedCount ? 'block' : 'none';
+        }
+
+        function renderMore() { displayedCount += 42; renderItems(); }
+
+        function playStream(id, ext) {
+            let type = (currentMode === 'get_live_streams') ? "live" : (currentMode === 'get_vod_streams' ? "movie" : "series");
+            let format = (currentMode === 'get_live_streams') ? "m3u8" : (ext || "mp4");
+            const streamUrl = `${API.base}/${type}/${API.user}/${API.pass}/${id}.${format}`;
+            hls.stopLoad(); hls.detachMedia(); video.pause(); 
+            if (format === 'm3u8' && Hls.isSupported()) {
+                hls.loadSource(streamUrl); hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else { video.src = streamUrl; video.play().catch(e => {}); }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.getElementById('searchBar').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = fullData.filter(i => i.name.toLowerCase().includes(val));
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = filtered.slice(0, 42).map(item => `
+                <div onclick="playStream('${item.stream_id || item.series_id}', 'm3u8')" class="media-card">
+                    <img src="${item.stream_icon || item.cover}" class="media-logo" loading="lazy">
+                    <p class="media-title">${item.name}</p>
+                </div>
+            `).join('');
+        };
+
+        window.onscroll = () => {
+            const btn = document.getElementById("backToTop");
+            if (window.scrollY > 400) btn.classList.add('show');
+            else btn.classList.remove('show');
+        };
+
+        document.getElementById('year').textContent = new Date().getFullYear();
+        window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
+    </script>
+<script>
+    // إعدادات الـ API مع نظام تحسين السرعة
+const API = { 
+    base: "http://ottpro.iptvpro2.com:8789", 
+    user: "Oujakr12", 
+    pass: "87593226",
+    proxy: "https://api.allorigins.win/get?url=" 
+};
+
+const player = new Plyr('#player');
+const video = document.getElementById('player');
+const hls = new Hls();
+
+// مخزن مؤقت لحفظ البيانات ومنع تكرار الطلبات الثقيلة
+const cache = {
+    categories: {}, // لحفظ الأقسام
+    content: {}     // لحفظ القنوات لكل قسم
+};
+
+let fullData = [], displayedCount = 42, currentMode = 'get_live_streams';
+
+// دالة جلب بيانات ذكية (تتحقق من المخزن المؤقت أولاً)
+async function fetchData(action, extra = "", useCache = true) {
+    const cacheKey = action + extra;
+    
+    // إذا كانت البيانات موجودة في المخزن، استرجعها فوراً (سرعة فائقة)
+    if (useCache && cache.content[cacheKey]) {
+        return cache.content[cacheKey];
+    }
+
+    const targetUrl = `${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=${action}${extra}`;
+    const finalUrl = `${API.proxy}${encodeURIComponent(targetUrl)}`;
+    
+    try {
+        const response = await fetch(finalUrl);
+        const json = await response.json();
+        const parsedData = JSON.parse(json.contents);
+        
+        // حفظ في المخزن للمرة القادمة
+        if (useCache) cache.content[cacheKey] = parsedData;
+        
+        return parsedData;
+    } catch (e) {
+        console.error("Fetch Error:", e);
+        return null;
+    }
+}
+
+async function switchMode(action, catAction, btn) {
+    currentMode = action;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    const catsWrapper = document.getElementById('catsWrapper');
+    
+    // إظهار المحتوى القديم أو فارغ فوراً بدلاً من كلمة "جاري التحميل" المملة
+    catsWrapper.innerHTML = '<div class="text-xs opacity-50 px-2">جاري التحديث...</div>';
+    
+    // جلب الأقسام (باستخدام الكاش إذا توفر)
+    const cats = await fetchData(catAction, "", true);
+    
+    if (cats) {
+        let html = `<button onclick="fetchContent('${action}', 'all', this)" class="cat-btn active">الكل</button>`;
+        cats.forEach(cat => {
+            html += `<button onclick="updateCategoryUI(this); fetchContent('${action}', '${cat.category_id}')" class="cat-btn">
+                ${cat.category_name}
+            </button>`;
+        });
+        catsWrapper.innerHTML = html;
+        fetchContent(action, 'all');
+    }
+}
+
+// دالة لتحديث شكل الأزرار بسرعة دون انتظار السيرفر
+function updateCategoryUI(btn) {
+    document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+async function fetchContent(action, catId) {
+    const grid = document.getElementById('contentGrid');
+    // إخفاء الشبكة القديمة بـ "أنيميشن" بسيط بدلاً من مسحها تماماً لجعل الانتقال ناعماً
+    grid.style.opacity = "0.5";
+    
+    let extra = catId !== 'all' ? `&category_id=${catId}` : "";
+    const data = await fetchData(action, extra, true);
+    
+    grid.style.opacity = "1";
+    if (data) {
+        fullData = data;
+        displayedCount = 42;
+        renderItems();
+    } else {
+        grid.innerHTML = "حدث خطأ في الاتصال";
+    }
+}
+
+function renderItems() {
+    const grid = document.getElementById('contentGrid');
+    // استخدام DocumentFragment لتحسين سرعة الريندر في المتصفح
+    const list = fullData.slice(0, displayedCount);
+    
+    grid.innerHTML = list.map(item => `
+        <div onclick="playStream('${item.stream_id || item.series_id || item.vod_id}', '${item.container_extension || 'm3u8'}')" class="media-card">
+            <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" 
+                 class="media-logo" 
+                 loading="lazy" 
+                 onerror="this.onerror=null;this.src='https://via.placeholder.com/150';">
+            <p class="media-title">${item.name}</p>
+        </div>
+    `).join('');
+    
+    document.getElementById('loadMore').style.display = fullData.length > displayedCount ? 'block' : 'none';
+}
+
+function renderMore() { 
+    displayedCount += 42; 
+    renderItems(); 
+}
+
+function playStream(id, ext) {
+    let type = (currentMode === 'get_live_streams') ? "live" : (currentMode === 'get_vod_streams' ? "movie" : "series");
+    let format = (currentMode === 'get_live_streams') ? "m3u8" : (ext || "mp4");
+    const streamUrl = `${API.base}/${type}/${API.user}/${API.pass}/${id}.${format}`;
+    
+    // تصفير المشغل قبل البدء
+    if (hls) hls.destroy();
+    
+    if (format === 'm3u8' && Hls.isSupported()) {
+        const newHls = new Hls();
+        newHls.loadSource(streamUrl);
+        newHls.attachMedia(video);
+        newHls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+    } else {
+        video.src = streamUrl;
+        video.play().catch(e => console.log("Auto-play blocked"));
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// تحسين سرعة البحث (Debounce) لمنع التهنيج أثناء الكتابة
+let searchTimer;
+document.getElementById('searchBar').oninput = (e) => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        const val = e.target.value.toLowerCase();
+        const filtered = fullData.filter(i => i.name && i.name.toLowerCase().includes(val));
+        const grid = document.getElementById('contentGrid');
+        
+        const list = filtered.slice(0, 60);
+        grid.innerHTML = list.map(item => `
+            <div onclick="playStream('${item.stream_id || item.series_id}', 'm3u8')" class="media-card">
+                <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo">
+                <p class="media-title">${item.name}</p>
+            </div>
+        `).join('');
+    }, 300); // ينتظر 300 ملي ثانية بعد توقفك عن الكتابة ليبدأ البحث
+};
+
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+}
+
+window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
+</script>
+</body>
+</html>
