@@ -886,5 +886,125 @@ function toggleTheme() {
 
 window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
 </script>
+
+     <script>
+        // إعدادات الـ API مع الوسيط Proxy
+        const API = { 
+            base: "https://ottpro.iptvpro2.com:8789", 
+            user: "Oujakr12", 
+            pass: "87593226",
+            proxy: "https://api.allorigins.win/get?url=" // هذا هو الوسيط السحري
+        };
+
+        const player = new Plyr('#player');
+        const video = document.getElementById('player');
+        const hls = new Hls();
+        let fullData = [], displayedCount = 42, currentMode = 'get_live_streams';
+
+        // دالة جلب البيانات عبر الوسيط
+        async function fetchData(action, extra = "") {
+            const targetUrl = `${API.base}/player_api.php?username=${API.user}&password=${API.pass}&action=${action}${extra}`;
+            const finalUrl = `${API.proxy}${encodeURIComponent(targetUrl)}`;
+            
+            try {
+                const response = await fetch(finalUrl);
+                const json = await response.json();
+                // AllOrigins يعيد البيانات داخل حقل contents
+                return JSON.parse(json.contents);
+            } catch (e) {
+                console.error("Fetch Error:", e);
+                return null;
+            }
+        }
+
+        async function switchMode(action, catAction, btn) {
+            currentMode = action;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const catsWrapper = document.getElementById('catsWrapper');
+            catsWrapper.innerHTML = "جاري التحميل...";
+            
+            const cats = await fetchData(catAction);
+            if (cats) {
+                catsWrapper.innerHTML = `<button onclick="fetchContent('${action}', 'all', this)" class="cat-btn active">الكل</button>`;
+                cats.forEach(cat => {
+                    const b = document.createElement('button');
+                    b.className = "cat-btn";
+                    b.innerText = cat.category_name;
+                    b.onclick = (e) => {
+                        document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+                        e.target.classList.add('active');
+                        fetchContent(action, cat.category_id);
+                    };
+                    catsWrapper.appendChild(b);
+                });
+                fetchContent(action, 'all');
+            }
+        }
+
+        async function fetchContent(action, catId) {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = "جاري جلب البيانات...";
+            
+            let extra = catId !== 'all' ? `&category_id=${catId}` : "";
+            const data = await fetchData(action, extra);
+            
+            if (data) {
+                fullData = data;
+                displayedCount = 42;
+                renderItems();
+            } else {
+                grid.innerHTML = "حدث خطأ في الاتصال بالسيرفر";
+            }
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('contentGrid');
+            const list = fullData.slice(0, displayedCount);
+            grid.innerHTML = list.map(item => `
+                <div onclick="playStream('${item.stream_id || item.series_id || item.vod_id}', '${item.container_extension || 'm3u8'}')" class="media-card">
+                    <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo" loading="lazy" onerror="this.src='https://via.placeholder.com/150'">
+                    <p class="media-title">${item.name}</p>
+                </div>
+            `).join('');
+            document.getElementById('loadMore').style.display = fullData.length > displayedCount ? 'block' : 'none';
+        }
+
+        function renderMore() { displayedCount += 42; renderItems(); }
+
+        function playStream(id, ext) {
+            let type = (currentMode === 'get_live_streams') ? "live" : (currentMode === 'get_vod_streams' ? "movie" : "series");
+            let format = (currentMode === 'get_live_streams') ? "m3u8" : (ext || "mp4");
+            const streamUrl = `${API.base}/${type}/${API.user}/${API.pass}/${id}.${format}`;
+            
+            if (format === 'm3u8' && Hls.isSupported()) {
+                hls.loadSource(streamUrl); hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else {
+                video.src = streamUrl; video.play();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        document.getElementById('searchBar').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = fullData.filter(i => i.name && i.name.toLowerCase().includes(val));
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = filtered.slice(0, 42).map(item => `
+                <div onclick="playStream('${item.stream_id || item.series_id}', 'm3u8')" class="media-card">
+                    <img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo">
+                    <p class="media-title">${item.name}</p>
+                </div>
+            `).join('');
+        };
+
+        window.onload = () => switchMode('get_live_streams', 'get_live_categories', document.querySelector('.mode-btn'));
+    </script>
+
 </body>
 </html>
