@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DAMI X-PRO - أفضل منصة لمشاهدة القنوات والأفلام والمسلسلات بجودة عالية">
+    <meta name="keywords" content="DAMI X-PRO, IPTV, Live TV, Movies, Series">
+    <meta name="author" content="Imad Eddine Lamrani">
+    <title>DAMI X-PRO | عماد الدين لمراني</title>
+    
+    <!-- Preconnect لتسريع التحميل -->
+    <link rel="preconnect" href="http://ottpro.iptvpro2.com:8789">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+        <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://cdn.plyr.io">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- CSS Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .match-card:hover {
+            background-color: #1e293b; /* bg-slate-800 */
+        }
+        /* Modal styles */
+        #setup-modal { transition: opacity 0.3s ease; }
+        .modal-content {
+            max-height: 80vh;
+        }
+        .space-y-6{
+            overflow:scroll;
+            height: 500px;
+            width:100%;
+        }
+        /* Active filter button style */
+        .btn-filter-active {
+            background-color: #10b981 !important; /* bg-emerald-500 */
+            color: white;
+        }
+        /* ==================== نظام الألوان المحسّن ==================== */
+        :root {
+            --bg-body: #050505;
+            --bg-card: #121212;
+            --bg-sidebar: rgba(18, 18, 18, 0.98);
+            --text-main: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-color: #d4af37;
+            --accent-hover: #f1c40f;
+            --border-color: rgba(212, 175, 55, 0.15);
+            --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+            --gradient-accent: linear-gradient(135deg, #d4af37 0%, #bf953f 100%);
+            --radius-card: 16px;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+
+        .light-mode {
+            --bg-body: #F0F2F5;
+            --bg-card: #FFFFFF;
+            --bg-sidebar: #FFFFFF;
+            --text-main: #050505;
+            --text-secondary: #65676B;
+            --accent-color: #1877F2;
+            --accent-hover: #166fe5;
+            --border-color: #dddfe2;
+            --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.1);
+            --gradient-accent: linear-gradient(135deg, #1877F2 0%, #1877F2 100%);
+            --radius-card: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            transition: background 0.3s ease, color 0.3s ease; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            overflow-x: hidden;
+            padding-bottom: 60px;
+            line-height: 1.6;
+        }
+        
+        /* ==================== Header محسّن ==================== */
+        header { 
+            background: var(--bg-card); 
+            padding: 0.8rem 1rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--accent-color);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+        }
+
+        .menu-btn { 
+            font-size: 1.3rem; 
+            cursor: pointer; 
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            color: var(--text-main);
+        }
+
+        .menu-btn:hover {
+            background: rgba(128, 128, 128, 0.1);
+            color: var(--accent-color);
+        }
+
+        .lang-select {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lang-select:hover {
+            border-color: var(--accent-color);
+        }
+
+        .lang-select option { 
+            background: var(--bg-card); 
+            color: var(--text-main); 
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(128, 128, 128, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent-color);
+            transform: rotate(20deg);
+        }
+
+        /* ==================== Player محسّن ==================== */
+        .player-wrapper { 
+            background: #000; 
+            width: 100%; 
+            position: relative; 
+            z-index: 50;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .player-wrapper video {
+            width: 100%;
+            height: auto;
+            max-height: 70vh;
+        }
+
+        /* ==================== Loading States ==================== */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 0.8s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, 
+                var(--bg-card) 25%, 
+                rgba(128,128,128,0.1) 50%, 
+                var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ==================== Tabs محسّنة ==================== */
+        .nav-tabs { 
+            display: flex; 
+            background: var(--bg-card); 
+            margin: 15px auto;
+            max-width: 800px; 
+            border-radius: var(--radius-card); 
+            padding: 6px; 
+            gap: 6px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .mode-btn { 
+            flex: 1; 
+            padding: 12px; 
+            font-size: 13px; 
+            font-weight: 600; 
+            color: var(--text-secondary); 
+            border-radius: calc(var(--radius-card) - 4px);
+            background: transparent; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-accent);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .mode-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .mode-btn.active { 
+            color: #fff;
+            background: var(--gradient-accent);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .mode-btn i {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 1.2rem;
+        }
+
+        /* ==================== Categories محسّنة ==================== */
+        .cat-scroll-area { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 10px; 
+            padding: 15px; 
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) transparent;
+        }
+
+        .cat-scroll-area::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .cat-scroll-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .cat-scroll-area::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .cat-btn { 
+            white-space: nowrap; 
+            padding: 8px 20px; 
+            border-radius: 25px; 
+            font-size: 13px; 
+            font-weight: 500;
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            color: var(--text-main); 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .cat-btn:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .cat-btn.active { 
+            background: var(--gradient-accent); 
+            color: #fff; 
+            border-color: var(--accent-color);
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        /* ==================== Search محسّن ==================== */
+        .search-container { 
+            max-width: 800px; 
+            margin: 15px auto; 
+            padding: 0 15px; 
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%; 
+            background: var(--bg-card); 
+            border: 2px solid var(--border-color);
+            padding: 14px 50px 14px 20px; 
+            border-radius: 30px; 
+            color: var(--text-main);
+            outline: none; 
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+            transition: color 0.3s ease;
+        }
+
+        .search-input:focus + .search-icon {
+            color: var(--accent-color);
+        }
+
+        /* ==================== Content Grid محسّن ==================== */
+        .content-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px; 
+            padding: 20px; 
+            max-width: 1400px; 
+            margin: 0 auto;
+        }
+
+        @media (max-width: 640px) {
+            .content-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 10px;
+                padding: 15px;
+            }
+        }
+
+        .media-card { 
+            background: var(--bg-card); 
+            border-radius: var(--radius-card); 
+            padding: 10px; 
+            text-align: center; 
+            border: 1px solid var(--border-color); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer; 
+            position: relative;
+            overflow: hidden;
+        }
+
+        .media-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--gradient-accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+
+        .media-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .media-card:hover { 
+            transform: translateY(-5px); 
+            border-color: var(--accent-color);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .media-logo { 
+            width: 100%; 
+            aspect-ratio: 1/1; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            margin-bottom: 8px;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .media-card:hover .media-logo {
+            transform: scale(1.05);
+        }
+
+        .media-title { 
+            font-size: 12px; 
+            font-weight: 600; 
+            overflow: hidden; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            line-height: 1.4;
+            position: relative;
+            z-index: 1;
+            color: var(--text-main);
+        }
+
+        /* ==================== Sidebar محسّن ==================== */
+        .sidebar {
+            position: fixed; 
+            top: 0; 
+            right: -300px; 
+            width: 280px; 
+            height: 100%;
+            background: var(--bg-sidebar); 
+            backdrop-filter: blur(20px);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+            z-index: 2000; 
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; 
+            flex-direction: column; 
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .sidebar.open { 
+            right: 0; 
+        }
+
+        .sidebar-overlay {
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.7); 
+            z-index: 1999;
+            display: none; 
+            opacity: 0; 
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(2px);
+        }
+
+        .sidebar-overlay.open { 
+            display: block; 
+            opacity: 1; 
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--accent-color);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .sidebar-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .sidebar-close:hover {
+            background: rgba(128, 128, 128, 0.2);
+            color: var(--accent-color);
+            transform: rotate(90deg);
+        }
+
+        .sidebar-link { 
+            display: flex; 
+            align-items: center; 
+            padding: 14px 12px; 
+            color: var(--text-main); 
+            text-decoration: none; 
+            border-radius: 12px; 
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(128, 128, 128, 0.15);
+            padding-left: 20px;
+        }
+
+        .sidebar-link i { 
+            width: 30px;
+            font-size: 1.1rem;
+            color: var(--accent-color); 
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 15px 0;
+        }
+
+        /* ==================== Buttons محسّنة ==================== */
+        .load-more-section {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .load-more-btn {
+            background: var(--gradient-accent);
+            color: #fff;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .load-more-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .load-more-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ==================== Download Section ==================== */
+        .app-download-section {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            padding: 40px 20px;
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        .download-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .download-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--gradient-accent);
+            color: #fff;
+            font-weight: 700;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(212, 175, 55, 0.4);
+        }
+
+        /* ==================== Floating Buttons ==================== */
+        .floating-btn {
+            position: fixed;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .floating-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+        }
+
+        #backToTop {
+            bottom: 30px;
+            left: 30px;
+            background: var(--gradient-accent);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #backToTop.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .whatsapp-btn {
+            bottom: 100px;
+            left: 30px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            font-size: 26px;
+        }
+
+        /* ==================== Modal محسّن ==================== */
+        .info-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            width: 90%;
+            max-width: 550px;
+            padding: 30px;
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .modal-close:hover {
+            background: rgba(128, 128, 128, 0.2);
+            color: var(--accent-color);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        /* ==================== Footer ==================== */
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        footer p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ==================== Empty State ==================== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        /* ==================== Responsive ==================== */
+        @media (max-width: 768px) {
+            .nav-tabs {
+                margin: 10px;
+            }
+
+            .mode-btn {
+                font-size: 11px;
+                padding: 10px 8px;
+            }
+
+            .mode-btn i {
+                font-size: 1rem;
+            }
+
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+            }
+
+            .whatsapp-btn {
+                bottom: 90px;
+                font-size: 22px;
+            }
+
+            #backToTop {
+                bottom: 25px;
+                left: 25px;
+            }
+        }
+    </style>
+    
+</head>
+<body>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-title">DAMI X-PRO</span>
+            <i class="fas fa-times sidebar-close" id="sidebarClose"></i>
+        </div>
+        <nav>
+            <div class="sidebar-link" data-action="home">
+                <i class="fas fa-home"></i>
+                <span data-translate="home">الرئيسية</span>
+            </div>
+            <div class="sidebar-link" data-action="about">
+                <i class="fas fa-info-circle"></i>
+                <span data-translate="about_us">من نحن</span>
+            </div>
+            <div class="sidebar-link" data-action="contact">
+                <i class="fas fa-envelope"></i>
+                <span data-translate="contact_us">اتصل بنا</span>
+            </div>
+            <div class="sidebar-link" data-action="privacy">
+                <i class="fas fa-user-shield"></i>
+                <span data-translate="privacy_policy">سياسة الخصوصية</span>
+            </div>
+            <div class="sidebar-link" data-action="terms">
+                <i class="fas fa-file-contract"></i>
+                <span data-translate="terms_use">شروط الاستخدام</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <a href="#" class="sidebar-link" style="color: var(--accent-color);">
+                <i class="fab fa-android"></i>
+                <span data-translate="download_app">تحميل التطبيق</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Header -->
+    <header>
+        <div class="header-logo">
+            <i class="fas fa-bars menu-btn" id="menuToggle"></i>
+            <span>DAMI X-PRO</span>
+        </div>
+        
+        <div class="header-actions">
+            <select class="lang-select" id="langSelect">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+            </select>
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </div>
+        </div>
+
+    </header>
+
+    <!-- Video Player -->
+    <div class="player-wrapper">
+        <video id="player" playsinline controls crossorigin></video>
+    </div>
+            <!-- Search -->
+    <div class="search-container">
+        <div class="search-wrapper">
+            <input 
+                id="searchInput" 
+                type="text" 
+                class="search-input" 
+                placeholder="ابحث عن القناة أو الفيلم..."
+                data-translate-placeholder="search_placeholder"
+            >
+            <i class="fas fa-search search-icon"></i>
+        </div>
+    </div>
+
+    <!-- Mode Tabs -->
+    <div class="nav-tabs">
+        <button class="mode-btn active" data-mode="live">
+            <i class="fas fa-tv"></i>
+            <span data-translate="live">مباشر</span>
+        </button>
+        <button class="mode-btn" data-mode="movies">
+            <i class="fas fa-film"></i>
+            <span data-translate="movies">أفلام</span>
+        </button>
+        <button class="mode-btn" data-mode="series">
+            <i class="fas fa-layer-group"></i>
+            <span data-translate="series">مسلسلات</span>
+        </button>
+    </div>
+
+    <!-- Categories -->
+    <div id="categoriesContainer" class="cat-scroll-area">
+        <div class="loading-spinner"></div>
+    </div>
+
+
+    <!-- Content Grid -->
+    <main>
+        <div id="contentGrid" class="content-grid"></div>
+        <div id="loadMoreSection" class="load-more-section" style="display: none;">
+            <button class="load-more-btn" id="loadMoreBtn">
+                <span data-translate="load_more">عرض المزيد</span>
+            </button>
+        </div>
+    </main>
+
+
+    <!-- Floating Buttons -->
+    <a href="https://wa.me/212783539816" target="_blank" class="floating-btn whatsapp-btn">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    <button id="backToTop" class="floating-btn">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Info Modal -->
+    <div id="infoModal" class="info-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle" class="modal-title"></h3>
+                <i class="fas fa-times modal-close" id="modalClose"></i>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Download Section -->
+    <section class="app-download-section">
+        <h2 class="download-title" data-translate="download_title">حمل تطبيق DAMI X-PRO</h2>
+        <p class="download-desc" data-translate="download_desc">
+            احصل على أفضل تجربة مشاهدة مع تطبيقنا الرسمي. سرعة، ثبات، وجودة عالية.
+        </p>
+        <a href="#" class="download-btn">
+            <i class="fab fa-android text-xl"></i>
+            <span data-translate="download_now">تحميل للأندرويد</span>
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p><strong>DAMI X-PRO</strong> &copy; <span id="year"></span></p>
+        <p data-translate="footer_rights">جميع الحقوق محفوظة للمطور عماد الدين لمراني</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js"></script>
+    
+    <script>
+        // ==================== إعدادات الـ API ==================== 
+        const CONFIG = {
+            api: {
+                base: "http://ottpro.iptvpro2.com:8789",
+                user: "Oujakr12",
+                pass: "87593226"
+            },
+            cache: {
+                enabled: true,
+                duration: 3600000 // ساعة واحدة
+            },
+            display: {
+                itemsPerPage: 42,
+                searchLimit: 60
+            }
+        };
+
+        // ==================== نظام الترجمة ==================== 
+        const i18n = {
+            ar: {
+                home: "الرئيسية",
+                live: "مباشر",
+                movies: "أفلام",
+                series: "مسلسلات",
+                search_placeholder: "ابحث عن القناة أو الفيلم...",
+                loading: "جاري التحميل...",
+                load_more: "عرض المزيد",
+                download_title: "حمل تطبيق DAMI X-PRO",
+                download_desc: "استمتع بأفضل القنوات والأفلام بجودة عالية وبدون تقطيع على هاتفك.",
+                download_now: "تحميل الآن",
+                download_app: "تحميل التطبيق",
+                about_us: "من نحن",
+                contact_us: "اتصل بنا",
+                privacy_policy: "سياسة الخصوصية",
+                terms_use: "شروط الاستخدام",
+                footer_rights: "جميع الحقوق محفوظة للمطور عماد الدين لمراني",
+                all_categories: "الكل",
+                no_results: "لا توجد نتائج",
+                error_loading: "حدث خطأ في التحميل",
+                modal_about: "DAMI X-PRO هي منصة رائدة في مجال البث الرقمي توفر محتوى ترفيهي عالي الجودة للمشاهدين في جميع أنحاء العالم.",
+                modal_contact: "يمكنك التواصل معنا عبر الواتساب: +212783539816 أو عبر البريد الإلكتروني.",
+                modal_privacy: "نحن نحترم خصوصيتك. لا يتم مشاركة بياناتك مع أي طرف ثالث. جميع المعلومات محمية ومشفرة.",
+                modal_terms: "باستخدامك للموقع، فإنك توافق على عدم إعادة بث المحتوى أو استخدامه بشكل غير قانوني. يجب احترام حقوق الملكية الفكرية."
+            },
+            en: {
+                home: "Home",
+                live: "Live TV",
+                movies: "Movies",
+                series: "Series",
+                search_placeholder: "Search channels or movies...",
+                loading: "Loading...",
+                load_more: "Load More",
+                download_title: "Download DAMI X-PRO App",
+                download_desc: "Enjoy the best channels and movies in high quality without interruption.",
+                download_now: "Download Now",
+                download_app: "Download App",
+                about_us: "About Us",
+                contact_us: "Contact Us",
+                privacy_policy: "Privacy Policy",
+                terms_use: "Terms of Use",
+                footer_rights: "All rights reserved to developer Imad Eddine Lamrani",
+                all_categories: "All",
+                no_results: "No results found",
+                error_loading: "Error loading content",
+                modal_about: "DAMI X-PRO is a leading streaming platform providing high-quality entertainment content.",
+                modal_contact: "Contact us via WhatsApp: +212783539816",
+                modal_privacy: "We respect your privacy. Data is not shared with third parties.",
+                modal_terms: "By using this site, you agree not to re-stream content illegally."
+            },
+            fr: {
+                home: "Accueil",
+                live: "Direct",
+                movies: "Films",
+                series: "Séries",
+                search_placeholder: "Rechercher...",
+                loading: "Chargement...",
+                load_more: "Voir plus",
+                download_title: "Télécharger DAMI X-PRO",
+                download_desc: "Profitez des meilleures chaînes et films en haute qualité.",
+                download_now: "Télécharger",
+                download_app: "Télécharger l'App",
+                about_us: "À propos",
+                contact_us: "Contactez-nous",
+                privacy_policy: "Confidentialité",
+                terms_use: "Conditions",
+                footer_rights: "Tous droits réservés à Imad Eddine Lamrani",
+                all_categories: "Tous",
+                no_results: "Aucun résultat",
+                error_loading: "Erreur de chargement",
+                modal_about: "DAMI X-PRO est une plateforme de streaming offrant un contenu de haute qualité.",
+                modal_contact: "Contactez-nous via WhatsApp : +212783539816",
+                modal_privacy: "Nous respectons votre vie privée.",
+                modal_terms: "Vous acceptez de ne pas rediffuser le contenu illégalement."
+            },
+            es: {
+                home: "Inicio",
+                live: "En vivo",
+                movies: "Películas",
+                series: "Series",
+                search_placeholder: "Buscar...",
+                loading: "Cargando...",
+                load_more: "Ver más",
+                download_title: "Descargar DAMI X-PRO",
+                download_desc: "Disfruta de los mejores canales y películas en alta calidad.",
+                download_now: "Descargar",
+                download_app: "Descargar App",
+                about_us: "Nosotros",
+                contact_us: "Contacto",
+                privacy_policy: "Privacidad",
+                terms_use: "Condiciones",
+                footer_rights: "Todos los derechos reservados a Imad Eddine Lamrani",
+                all_categories: "Todos",
+                no_results: "Sin resultados",
+                error_loading: "Error al cargar",
+                modal_about: "DAMI X-PRO es una plataforma de transmisión de alta calidad.",
+                modal_contact: "Contáctenos vía WhatsApp: +212783539816",
+                modal_privacy: "Respetamos su privacidad.",
+                modal_terms: "Acepta no retransmitir contenido ilegalmente."
+            }
+        };
+
+        // ==================== متغيرات عامة ==================== 
+        let currentLang = 'ar';
+        let currentMode = 'live';
+        let currentCategory = 'all';
+        let fullData = [];
+        let displayedCount = 0;
+        let searchTimeout = null;
+        let player = null;
+        let hls = null;
+
+        // ==================== نظام الكاش المحسّن ==================== 
+        class CacheManager {
+            constructor() {
+                this.storage = new Map();
+                this.timestamps = new Map();
+            }
+
+            set(key, value) {
+                this.storage.set(key, value);
+                this.timestamps.set(key, Date.now());
+            }
+
+            get(key) {
+                if (!this.storage.has(key)) return null;
+                
+                const timestamp = this.timestamps.get(key);
+                const age = Date.now() - timestamp;
+                
+                if (age > CONFIG.cache.duration) {
+                    this.storage.delete(key);
+                    this.timestamps.delete(key);
+                    return null;
+                }
+                
+                return this.storage.get(key);
+            }
+
+            clear() {
+                this.storage.clear();
+                this.timestamps.clear();
+            }
+        }
+
+        const cache = new CacheManager();
+
+        // ==================== Helper Functions ==================== 
+        const $ = (selector) => document.querySelector(selector);
+        const $$ = (selector) => document.querySelectorAll(selector);
+
+        function showLoading(container, message = i18n[currentLang].loading) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 15px;">${message}</p>
+                </div>
+            `;
+        }
+
+        function showError(container, message = i18n[currentLang].error_loading) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>${message}</h3>
+                </div>
+            `;
+        }
+
+        function showEmpty(container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>${i18n[currentLang].no_results}</h3>
+                </div>
+            `;
+        }
+
+        // ==================== API Functions ==================== 
+        async function fetchAPI(action, params = {}) {
+            const cacheKey = `${action}_${JSON.stringify(params)}`;
+            
+            // التحقق من الكاش أولاً
+            if (CONFIG.cache.enabled) {
+                const cached = cache.get(cacheKey);
+                if (cached) return cached;
+            }
+
+            const url = new URL(`${CONFIG.api.base}/player_api.php`);
+            url.searchParams.append('username', CONFIG.api.user);
+            url.searchParams.append('password', CONFIG.api.pass);
+            url.searchParams.append('action', action);
+            
+            Object.entries(params).forEach(([key, value]) => {
+                url.searchParams.append(key, value);
+            });
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                
+                // حفظ في الكاش
+                if (CONFIG.cache.enabled) {
+                    cache.set(cacheKey, data);
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
+        // ==================== Categories Functions ==================== 
+        async function loadCategories() {
+            const container = $('#categoriesContainer');
+            showLoading(container);
+
+            const modeConfig = {
+                live: { action: 'get_live_categories', streamAction: 'get_live_streams' },
+                movies: { action: 'get_vod_categories', streamAction: 'get_vod_streams' },
+                series: { action: 'get_series_categories', streamAction: 'get_series' }
+            };
+
+            const config = modeConfig[currentMode];
+
+            try {
+                const categories = await fetchAPI(config.action);
+                
+                let html = `
+                    <button class="cat-btn active" data-category="all">
+                        ${i18n[currentLang].all_categories}
+                    </button>
+                `;
+
+                categories.forEach(cat => {
+                    html += `
+                        <button class="cat-btn" data-category="${cat.category_id}">
+                            ${cat.category_name}
+                        </button>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+                // إضافة Event Listeners
+                $$('.cat-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        $$('.cat-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        currentCategory = e.target.dataset.category;
+                        loadContent();
+                    });
+                });
+
+                // تحميل المحتوى
+                currentCategory = 'all';
+                loadContent();
+
+            } catch (error) {
+                showError(container);
+            }
+        }
+
+        // ==================== Content Functions ==================== 
+        async function loadContent() {
+            const grid = $('#contentGrid');
+            showLoading(grid);
+
+            const modeConfig = {
+                live: 'get_live_streams',
+                movies: 'get_vod_streams',
+                series: 'get_series'
+            };
+
+            const action = modeConfig[currentMode];
+            const params = currentCategory !== 'all' ? { category_id: currentCategory } : {};
+
+            try {
+                const data = await fetchAPI(action, params);
+                fullData = Array.isArray(data) ? data : [];
+                displayedCount = 0;
+                renderContent();
+            } catch (error) {
+                showError(grid);
+            }
+        }
+
+        function renderContent(append = false) {
+            const grid = $('#contentGrid');
+            const loadMoreSection = $('#loadMoreSection');
+            
+            if (!append) {
+                grid.innerHTML = '';
+                displayedCount = 0;
+            }
+
+            const start = displayedCount;
+            const end = Math.min(start + CONFIG.display.itemsPerPage, fullData.length);
+            const items = fullData.slice(start, end);
+
+            if (items.length === 0 && !append) {
+                showEmpty(grid);
+                loadMoreSection.style.display = 'none';
+                return;
+            }
+
+            items.forEach(item => {
+                const card = createMediaCard(item);
+                grid.appendChild(card);
+            });
+
+            displayedCount = end;
+
+            // إظهار/إخفاء زر المزيد
+            loadMoreSection.style.display = displayedCount < fullData.length ? 'block' : 'none';
+        }
+
+        function createMediaCard(item) {
+            const div = document.createElement('div');
+            div.className = 'media-card';
+            
+            const streamId = item.stream_id || item.series_id || item.vod_id;
+            const extension = item.container_extension || 'm3u8';
+            const icon = item.stream_icon || item.cover || 'https://via.placeholder.com/150';
+            const name = item.name || 'Unknown';
+
+            div.innerHTML = `
+                <img 
+                    src="${icon}" 
+                    class="media-logo" 
+                    loading="lazy"
+                    onerror="this.src='https://via.placeholder.com/150?text=No+Image'"
+                    alt="${name}"
+                >
+                <p class="media-title">${name}</p>
+            `;
+
+            div.addEventListener('click', () => playStream(streamId, extension));
+
+            return div;
+        }
+
+        // ==================== Player Functions ==================== 
+        function initPlayer() {
+            player = new Plyr('#player', {
+                controls: [
+                    'play-large',
+                    'play',
+                    'progress',
+                    'current-time',
+                    'mute',
+                    'volume',
+                    'settings',
+                    'fullscreen'
+                ],
+                settings: ['quality', 'speed'],
+                quality: {
+                    default: 720,
+                    options: [1080, 720, 480, 360]
+                }
+            });
+        }
+
+        function playStream(id, ext) {
+            const typeMap = {
+                live: 'live',
+                movies: 'movie',
+                series: 'series'
+            };
+
+            const type = typeMap[currentMode];
+            const format = currentMode === 'live' ? 'm3u8' : (ext || 'mp4');
+            const streamUrl = `${CONFIG.api.base}/${type}/${CONFIG.api.user}/${CONFIG.api.pass}/${id}.${format}`;
+
+            const video = $('#player');
+
+            // إيقاف المشغل السابق
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+
+            video.pause();
+
+            if (format === 'm3u8') {
+                if (Hls.isSupported()) {
+                    hls = new Hls({
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        backBufferLength: 90
+                    });
+                    
+                    hls.loadSource(streamUrl);
+                    hls.attachMedia(video);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                        video.play().catch(e => console.log('Autoplay prevented:', e));
+                    });
+
+                    hls.on(Hls.Events.ERROR, (event, data) => {
+                        if (data.fatal) {
+                            console.error('HLS error:', data);
+                            switch(data.type) {
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    hls.startLoad();
+                                    break;
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    hls.recoverMediaError();
+                                    break;
+                                default:
+                                    hls.destroy();
+                                    break;
+                            }
+                        }
+                    });
+
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    // Safari native HLS support
+                    video.src = streamUrl;
+                    video.play().catch(e => console.log('Autoplay prevented:', e));
+                } else {
+                    alert('Your browser does not support HLS streaming. Please use Chrome, Firefox, or Safari.');
+                }
+            } else {
+                video.src = streamUrl;
+                video.play().catch(e => console.log('Autoplay prevented:', e));
+            }
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==================== Search Function ==================== 
+        function handleSearch(query) {
+            const grid = $('#contentGrid');
+            const loadMoreSection = $('#loadMoreSection');
+            
+            if (!query.trim()) {
+                renderContent();
+                return;
+            }
+
+            const filtered = fullData.filter(item => 
+                item.name && item.name.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                showEmpty(grid);
+                loadMoreSection.style.display = 'none';
+                return;
+            }
+
+            grid.innerHTML = '';
+            const limit = Math.min(filtered.length, CONFIG.display.searchLimit);
+            
+            filtered.slice(0, limit).forEach(item => {
+                const card = createMediaCard(item);
+                grid.appendChild(card);
+            });
+
+            loadMoreSection.style.display = 'none';
+        }
+
+        // ==================== Language Function ==================== 
+        function changeLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+            // تحديث جميع النصوص
+            $$('[data-translate]').forEach(el => {
+                const key = el.dataset.translate;
+                if (i18n[lang][key]) {
+                    el.textContent = i18n[lang][key];
+                }
+            });
+
+            $$('[data-translate-placeholder]').forEach(el => {
+                const key = el.dataset.translatePlaceholder;
+                if (i18n[lang][key]) {
+                    el.placeholder = i18n[lang][key];
+                }
+            });
+
+            // إعادة تحميل الفئات بعد تغيير اللغة
+            loadCategories();
+        }
+
+        // ==================== Theme Function ==================== 
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const icon = $('#themeIcon');
+            const isLight = document.body.classList.contains('light-mode');
+            
+            icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+            
+            // حفظ التفضيل
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        }
+
+        // ==================== Modal Functions ==================== 
+        function showModal(type) {
+            const modal = $('#infoModal');
+            const title = $('#modalTitle');
+            const body = $('#modalBody');
+
+            const titleKey = {
+                about: 'about_us',
+                contact: 'contact_us',
+                privacy: 'privacy_policy',
+                terms: 'terms_use'
+            }[type];
+
+            title.textContent = i18n[currentLang][titleKey];
+            body.textContent = i18n[currentLang][`modal_${type}`];
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            $('#infoModal').style.display = 'none';
+        }
+
+        // ==================== Sidebar Functions ==================== 
+        function toggleSidebar(show = null) {
+            const sidebar = $('#sidebar');
+            const overlay = $('#sidebarOverlay');
+            
+            if (show === null) {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open');
+            } else {
+                sidebar.classList.toggle('open', show);
+                overlay.classList.toggle('open', show);
+            }
+        }
+
+        // ==================== Event Listeners ==================== 
+        function initEventListeners() {
+            // Menu Toggle
+            $('#menuToggle').addEventListener('click', () => toggleSidebar());
+            $('#sidebarClose').addEventListener('click', () => toggleSidebar(false));
+            $('#sidebarOverlay').addEventListener('click', () => toggleSidebar(false));
+
+            // Sidebar Links
+            $$('.sidebar-link[data-action]').forEach(link => {
+                link.addEventListener('click', () => {
+                    const action = link.dataset.action;
+                    if (action === 'home') {
+                        toggleSidebar(false);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        toggleSidebar(false);
+                        showModal(action);
+                    }
+                });
+            });
+
+            // Theme Toggle
+            $('#themeToggle').addEventListener('click', toggleTheme);
+
+            // Language Select
+            $('#langSelect').addEventListener('change', (e) => {
+                changeLanguage(e.target.value);
+            });
+
+            // Mode Tabs
+            $$('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    $$('.mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentMode = btn.dataset.mode;
+                    loadCategories();
+                });
+            });
+
+            // Search Input
+            $('#searchInput').addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    handleSearch(e.target.value);
+                }, 300);
+            });
+
+            // Load More Button
+            $('#loadMoreBtn').addEventListener('click', () => {
+                renderContent(true);
+            });
+
+            // Modal Close
+            $('#modalClose').addEventListener('click', closeModal);
+            $('#infoModal').addEventListener('click', (e) => {
+                if (e.target.id === 'infoModal') closeModal();
+            });
+
+            // Back to Top
+            $('#backToTop').addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // Scroll Event for Back to Top Button
+            window.addEventListener('scroll', () => {
+                const btn = $('#backToTop');
+                if (window.scrollY > 400) {
+                    btn.classList.add('show');
+                } else {
+                    btn.classList.remove('show');
+                }
+            });
+        }
+
+        // ==================== Initialize App ==================== 
+        function initApp() {
+            // تهيئة المشغل
+            initPlayer();
+
+            // تهيئة Event Listeners
+            initEventListeners();
+
+            // تحميل Theme المحفوظ
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                $('#themeIcon').className = 'fas fa-sun';
+            }
+
+            // تحميل اللغة المحفوظة
+            const savedLang = localStorage.getItem('language') || 'ar';
+            $('#langSelect').value = savedLang;
+            changeLanguage(savedLang);
+
+            // تحديث السنة في الفوتر
+            $('#year').textContent = new Date().getFullYear();
+
+            // تحميل المحتوى الأولي
+            loadCategories();
+        }
+
+        // ==================== Start App ==================== 
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+    </script>
+</body>
+</html>
