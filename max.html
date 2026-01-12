@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DAMI X-PRO - أفضل منصة لمشاهدة القنوات والأفلام والمسلسلات بجودة عالية">
+    <meta name="keywords" content="DAMI X-PRO, IPTV, Live TV, Movies, Series, Imad Eddine Lamrani">
+    <meta name="author" content="Imad Eddine Lamrani">
+    <title>DAMI X-PRO | عماد الدين لمراني</title>
+    
+    <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/512/2965/2965363.png" type="image/x-icon">
+
+    <link rel="preconnect" href="http://99gopro.org:8080">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-body: #050505;
+            --bg-card: #121212;
+            --bg-sidebar: rgba(18, 18, 18, 0.98);
+            --text-main: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-color: #d4af37;
+            --border-color: rgba(212, 175, 55, 0.15);
+            --gradient-accent: linear-gradient(135deg, #d4af37 0%, #bf953f 100%);
+        }
+
+        .light-mode {
+            --bg-body: #F0F2F5;
+            --bg-card: #FFFFFF;
+            --bg-sidebar: #FFFFFF;
+            --text-main: #050505;
+            --text-secondary: #65676B;
+            --accent-color: #1877F2;
+            --border-color: #dddfe2;
+        }
+
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Cairo', sans-serif; transition: 0.3s; overflow-x: hidden; }
+        
+        /* Sidebar */
+        .sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: var(--bg-sidebar); backdrop-filter: blur(15px); z-index: 1000; transition: 0.4s; padding: 20px; box-shadow: -5px 0 20px rgba(0,0,0,0.5); }
+        .sidebar.open { right: 0; }
+        html[dir="ltr"] .sidebar { right: auto; left: -300px; }
+        html[dir="ltr"] .sidebar.open { left: 0; }
+
+        .sidebar-link { display: flex; align-items: center; gap: 15px; padding: 12px; border-radius: 12px; color: var(--text-main); transition: 0.3s; cursor: pointer; margin-bottom: 5px; }
+        .sidebar-link:hover { background: rgba(212, 175, 55, 0.1); color: var(--accent-color); }
+
+        /* Floating Buttons */
+        .whatsapp-btn { position: fixed; bottom: 30px; left: 30px; width: 60px; height: 60px; background: #25d366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 999; transition: 0.3s; }
+        .whatsapp-btn:hover { transform: scale(1.1); }
+        
+        .back-to-top { position: fixed; bottom: 105px; left: 35px; width: 50px; height: 50px; background: var(--accent-color); color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; z-index: 998; transition: 0.3s; }
+        .back-to-top.show { display: flex; }
+
+        .media-card { background: var(--bg-card); border-radius: 12px; padding: 10px; border: 1px solid var(--border-color); transition: 0.3s; cursor: pointer; }
+        .media-card:hover { border-color: var(--accent-color); transform: translateY(-5px); }
+        .media-logo { width: 100%; aspect-ratio: 1/1; object-fit: contain; background: #000; border-radius: 8px; }
+
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--accent-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .modal-content { background: var(--bg-card); padding: 30px; border-radius: 20px; max-width: 500px; width: 100%; border: 1px solid var(--accent-color); }
+    </style>
+</head>
+<body>
+
+    <a href="https://wa.me/212783539816" target="_blank" class="whatsapp-btn">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <div id="backToTop" class="back-to-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    <div id="overlay" class="fixed inset-0 bg-black/60 z-[999] hidden" onclick="toggleSidebar()"></div>
+
+    <aside id="sidebar" class="sidebar">
+        <div class="flex justify-between items-center mb-8 pb-4 border-b border-[var(--border-color)]">
+            <div class="text-xl font-black text-[var(--accent-color)]">DAMI X-PRO</div>
+            <i class="fas fa-times cursor-pointer text-xl" onclick="toggleSidebar()"></i>
+        </div>
+        <nav>
+            <div class="sidebar-link" onclick="location.reload()"><i class="fas fa-home"></i> <span data-translate="home">الرئيسية</span></div>
+            <div class="sidebar-link" onclick="openModal('about')"><i class="fas fa-info-circle"></i> <span data-translate="about_us">من نحن</span></div>
+            <div class="sidebar-link" onclick="openModal('contact')"><i class="fas fa-envelope"></i> <span data-translate="contact_us">اتصل بنا</span></div>
+            <div class="sidebar-link" onclick="openModal('privacy')"><i class="fas fa-user-shield"></i> <span data-translate="privacy_policy">سياسة الخصوصية</span></div>
+            <div class="my-4 border-t border-[var(--border-color)]"></div>
+            <a href="https://dami-xpro.com/download" class="sidebar-link" style="background: var(--gradient-accent); color: white; border-radius: 12px;">
+                <i class="fab fa-android" style="color: white;"></i> <span data-translate="download_app">تحميل التطبيق</span>
+            </a>
+        </nav>
+    </aside>
+
+    <header class="bg-[var(--bg-card)] border-b border-[var(--border-color)] sticky top-0 z-[50] p-4 flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <i class="fas fa-bars cursor-pointer text-xl" onclick="toggleSidebar()"></i>
+            <div class="text-xl font-bold"><span class="text-[var(--accent-color)]">DAMI</span> X-PRO</div>
+        </div>
+        <div class="flex items-center gap-3">
+            <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-transparent border border-[var(--border-color)] rounded-lg px-2 py-1 text-sm outline-none">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+            </select>
+            <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-800/50 cursor-pointer" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="player-wrapper w-full bg-black">
+        <video id="player" playsinline controls crossorigin class="w-full"></video>
+    </div>
+
+    <main class="max-w-7xl mx-auto p-4">
+        <div class="relative max-w-2xl mx-auto my-8">
+            <input type="text" id="searchInput" class="w-full bg-[var(--bg-card)] border-2 border-[var(--border-color)] rounded-full py-3 px-12 outline-none focus:border-[var(--accent-color)]" placeholder="ابحث هنا..." data-translate-placeholder="search">
+            <i class="fas fa-search absolute right-5 top-1/2 -translate-y-1/2 text-gray-500"></i>
+        </div>
+
+        <div class="flex max-w-md mx-auto bg-[var(--bg-card)] border border-[var(--border-color)] p-1 rounded-2xl mb-8">
+            <button onclick="switchMode('live')" class="mode-btn active flex-1 py-2 rounded-xl text-sm font-bold" data-mode="live"><span data-translate="live">مباشر</span></button>
+            <button onclick="switchMode('movies')" class="mode-btn flex-1 py-2 rounded-xl text-sm font-bold" data-mode="movies"><span data-translate="movies">أفلام</span></button>
+            <button onclick="switchMode('series')" class="mode-btn flex-1 py-2 rounded-xl text-sm font-bold" data-mode="series"><span data-translate="series">مسلسلات</span></button>
+        </div>
+
+        <div id="categoriesContainer" class="flex overflow-x-auto gap-2 pb-4 mb-6 no-scrollbar"></div>
+        <div id="contentGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+        <div id="loader" class="hidden"><div class="loader"></div></div>
+        <button id="loadMoreBtn" onclick="loadMore()" class="hidden mx-auto mt-8 bg-[var(--bg-card)] border border-[var(--accent-color)] text-[var(--accent-color)] px-10 py-2 rounded-full font-bold hover:bg-[var(--accent-color)] hover:text-white transition">عرض المزيد</button>
+    </main>
+
+    <footer class="bg-[var(--bg-card)] border-t border-[var(--border-color)] p-10 text-center mt-20">
+        <a href="https://dami-xpro.com/download" class="inline-flex items-center gap-3 bg-[var(--accent-color)] text-white px-8 py-3 rounded-full font-bold mb-8 hover:scale-105 transition">
+            <i class="fab fa-android"></i> <span data-translate="download_app">تحميل التطبيق</span>
+        </a>
+        <p class="font-bold text-xl mb-2">DAMI X-PRO &copy; <span id="year"></span></p>
+        <p class="text-gray-500">Designed & Developed by <span class="text-[var(--accent-color)]">Imad Eddine Lamrani</span></p>
+    </footer>
+
+    <div id="aboutModal" class="modal" onclick="closeModal('about')">
+        <div class="modal-content text-center" onclick="event.stopPropagation()">
+            <h2 class="text-2xl font-bold text-[var(--accent-color)] mb-4" data-translate="about_us">من نحن</h2>
+            <p>DAMI X-PRO هي منصة متطورة للبث الرقمي تقدم أفضل تجربة مشاهدة للقنوات والأفلام.</p>
+            <button class="mt-6 px-6 py-2 bg-[var(--accent-color)] text-white rounded-lg" onclick="closeModal('about')">إغلاق</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js"></script>
+
+    <script>
+        const CONFIG = {
+            api: { base: "http://99gopro.org:8080", user: "4640611723208466", pass: "4640611723208466" }
+        };
+
+        const i18n = {
+            ar: { home: "الرئيسية", about_us: "من نحن", contact_us: "اتصل بنا", privacy_policy: "سياسة الخصوصية", download_app: "تحميل التطبيق", live: "مباشر", movies: "أفلام", series: "مسلسلات", all: "الكل", search: "ابحث هنا..." },
+            en: { home: "Home", about_us: "About Us", contact_us: "Contact Us", privacy_policy: "Privacy Policy", download_app: "Download App", live: "Live TV", movies: "Movies", series: "Series", all: "All", search: "Search here..." },
+            fr: { home: "Accueil", about_us: "À propos", contact_us: "Contact", privacy_policy: "Confidentialité", download_app: "Télécharger", live: "Direct", movies: "Films", series: "Séries", all: "Tout", search: "Chercher..." },
+            es: { home: "Inicio", about_us: "Nosotros", contact_us: "Contacto", privacy_policy: "Privacidad", download_app: "Descargar", live: "En vivo", movies: "Películas", series: "Series", all: "Todo", search: "Buscar..." }
+        };
+
+        let currentLang = 'ar';
+        let currentMode = 'live';
+        let allData = [];
+        let displayedCount = 0;
+        let hls = null;
+
+        // Toggle Sidebar
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('hidden');
+        }
+
+        // Modals
+        function openModal(id) {
+            if(id === 'contact') return window.open('https://wa.me/212783539816');
+            document.getElementById(id + 'Modal').style.display = 'flex';
+            toggleSidebar();
+        }
+        function closeModal(id) {
+            document.getElementById(id + 'Modal').style.display = 'none';
+        }
+
+        // Language & Theme
+        function changeLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                el.textContent = i18n[lang][el.dataset.translate];
+            });
+            document.getElementById('searchInput').placeholder = i18n[lang].search;
+            fetchCategories();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const icon = document.getElementById('themeIcon');
+            icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // Scroll Logic for BackToTop
+        window.onscroll = function() {
+            const btn = document.getElementById('backToTop');
+            if (document.body.scrollTop > 400 || document.documentElement.scrollTop > 400) {
+                btn.classList.add('show');
+            } else {
+                btn.classList.remove('show');
+            }
+        };
+
+        // API Logic
+        async function fetchAPI(action, params = {}) {
+            const url = new URL(`${CONFIG.api.base}/player_api.php`);
+            url.searchParams.append('username', CONFIG.api.user);
+            url.searchParams.append('password', CONFIG.api.pass);
+            url.searchParams.append('action', action);
+            Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
+            const res = await fetch(url);
+            return res.json();
+        }
+
+        async function fetchCategories() {
+            const action = currentMode === 'live' ? 'get_live_categories' : (currentMode === 'movies' ? 'get_vod_categories' : 'get_series_categories');
+            const cats = await fetchAPI(action);
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = `<button onclick="loadCategory('all')" class="whitespace-nowrap px-4 py-1 rounded-full bg-[var(--accent-color)] text-white text-sm font-bold">${i18n[currentLang].all}</button>`;
+            cats.forEach(c => {
+                container.innerHTML += `<button onclick="loadCategory('${c.category_id}')" class="whitespace-nowrap px-4 py-1 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] text-sm">${c.category_name}</button>`;
+            });
+            loadCategory('all');
+        }
+
+        async function loadCategory(id) {
+            const grid = document.getElementById('contentGrid');
+            const loader = document.getElementById('loader');
+            grid.innerHTML = '';
+            loader.classList.remove('hidden');
+            
+            const action = currentMode === 'live' ? 'get_live_streams' : (currentMode === 'movies' ? 'get_vod_streams' : 'get_series');
+            allData = await fetchAPI(action, id !== 'all' ? { category_id: id } : {});
+            
+            displayedCount = 0;
+            loader.classList.add('hidden');
+            loadMore();
+        }
+
+        function loadMore() {
+            const grid = document.getElementById('contentGrid');
+            const nextBatch = allData.slice(displayedCount, displayedCount + 30);
+            nextBatch.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'media-card';
+                card.innerHTML = `<img src="${item.stream_icon || item.cover || 'https://via.placeholder.com/150'}" class="media-logo"><div class="text-xs font-bold truncate mt-2 text-center">${item.name}</div>`;
+                card.onclick = () => playStream(item.stream_id || item.vod_id, item.container_extension);
+                grid.appendChild(card);
+            });
+            displayedCount += nextBatch.length;
+            document.getElementById('loadMoreBtn').style.display = displayedCount < allData.length ? 'block' : 'none';
+        }
+
+        function playStream(id, ext) {
+            const video = document.getElementById('player');
+            let url = currentMode === 'live' 
+                ? `${CONFIG.api.base}/live/${CONFIG.api.user}/${CONFIG.api.pass}/${id}.m3u8`
+                : `${CONFIG.api.base}/movie/${CONFIG.api.user}/${CONFIG.api.pass}/${id}.${ext || 'mp4'}`;
+            
+            if(hls) hls.destroy();
+            if(url.endsWith('.m3u8') && Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else {
+                video.src = url;
+                video.play();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            fetchCategories();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new Plyr('#player');
+            document.getElementById('year').textContent = new Date().getFullYear();
+            changeLanguage('ar');
+        });
+    </script>
+</body>
+</html>
